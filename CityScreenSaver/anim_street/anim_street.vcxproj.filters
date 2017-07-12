@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="House.cpp">
+      <Filter>WorldObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\World.cpp">
+      <Filter>WorldObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationWindowStreet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\DC3D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MFCApplication1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="House.h">
+      <Filter>WorldObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\World.h">
+      <Filter>WorldObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationWindowStreet.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\DC3D.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MFCApplication1.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\ball.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\MFCApplication1.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\Work\cpp\Game_anim_one\ball.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\MFCApplication1.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="ClassDiagram.cd">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="WorldObjects">
+      <UniqueIdentifier>{d24597cb-5175-4f43-9aa2-ea50d75b338d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{5f8395d5-d29c-418f-a613-ba166d0a8abd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{e5f776f1-fea2-4a69-92e6-f95180db943d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MFCApplication1.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
