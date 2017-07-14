@@ -82,8 +82,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt">
-      <Filter>Source Files</Filter>
-    </Text>
+    <Text Include="pet.txt" />
   </ItemGroup>
 </Project>
