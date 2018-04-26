@@ -56,8 +56,12 @@ public:
 class  City
 {
 public:
-   std::vector<House> m_housesLeft;
-   std::vector<House> m_housesRight;
+   std::vector<House> m_leftRow1;
+   std::vector<House> m_leftRow2;
+   std::vector<House> m_leftRow3;
+   std::vector<House> m_rightRow1;
+   std::vector<House> m_rightRow2;
+   std::vector<House> m_rightRow3;
    //int m_houseCount;
 
    CBitmapObject m_ballBitmap;
@@ -70,6 +74,10 @@ public:
    void Init(CRect & rc, double z_houseStep, double groundHeight);
    void Draw(CDC3D & dc);
    void MoveHouses(RECT * prc, double dz, int houseCount, double z_houseStep, double z_camera);
+
+protected:
+   void InitCityRow(CRect &rc, int xPos, std::vector<House> &m_rightRow1, double groundHeight, double z_houseStep);
+
 };
 
 class Road

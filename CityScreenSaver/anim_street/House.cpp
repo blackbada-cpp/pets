@@ -55,63 +55,48 @@ void House::DoDraw(CDC3D & dc)
    //Windows
    if (detail == HighDetailLevel)
    {
-      for (z = m_windowWidth; z < houseWidth - m_windowWidth; z += m_windowWidth * 2)
+      for (z = m_windowWidth; z <= houseWidth - m_windowWidth; z += m_windowWidth * 2)
       {
-         for (y = m_windowHeight; y < houseHeight - m_windowHeight; y += m_windowHeight * 2)
+         //From bottom to top
+         for (y = houseHeight - m_windowHeight*2; y >= m_windowHeight; y -= m_windowHeight * 2)
          {
             DrawLeftWallRect(dc, m_windowCol, z, y, m_windowWidth, m_windowHeight);
          }
       }
    }
-   //DrawLeftWallRect(dc, m_windowCol, m_windowWidth,   m_windowHeight,   m_windowWidth, m_windowHeight);
-   //DrawLeftWallRect(dc, m_windowCol, m_windowWidth*3, m_windowHeight,   m_windowWidth, m_windowHeight);
-   //DrawLeftWallRect(dc, m_windowCol, m_windowWidth,   m_windowHeight*3, m_windowWidth, m_windowHeight);
-   //DrawLeftWallRect(dc, m_windowCol, m_windowWidth*3, m_windowHeight*3, m_windowWidth, m_windowHeight);
-   //DrawLeftWallRect(dc, m_windowCol, m_windowWidth,   m_windowHeight*5, m_windowWidth, m_windowHeight*2);//door
-   //DrawLeftWallRect(dc, m_windowCol, m_windowWidth*3, m_windowHeight*5, m_windowWidth, m_windowHeight);
 
    //right wall
-   DrawRightWallRect(dc, m_sideCol,   0,               0,                houseWidth,  houseHeight );
+   DrawRightWallRect(dc, m_sideCol, 0, 0, houseWidth,  houseHeight);
    //Windows
    if (detail == HighDetailLevel)
    {
-      for (z = m_windowWidth; z < houseWidth - m_windowWidth; z += m_windowWidth * 2)
+      for (z = m_windowWidth; z <= houseWidth - m_windowWidth; z += m_windowWidth * 2)
       {
-         for (y = m_windowHeight; y < houseHeight - m_windowHeight; y += m_windowHeight * 2)
+         //From bottom to top
+         for (y = houseHeight - m_windowHeight*2; y >= m_windowHeight; y -= m_windowHeight * 2)
          {
             DrawRightWallRect(dc, m_windowCol, z, y, m_windowWidth, m_windowHeight);
          }
       }
    }
-   //DrawRightWallRect(dc, m_windowCol, m_windowWidth, m_windowHeight, m_windowWidth, m_windowHeight);
-   //DrawRightWallRect(dc, m_windowCol, m_windowWidth * 3, m_windowHeight,     m_windowWidth, m_windowHeight);
-   //DrawRightWallRect(dc, m_windowCol, m_windowWidth,     m_windowHeight * 3, m_windowWidth, m_windowHeight);
-   //DrawRightWallRect(dc, m_windowCol, m_windowWidth * 3, m_windowHeight * 3, m_windowWidth, m_windowHeight);
-   //DrawRightWallRect(dc, m_windowCol, m_windowWidth,     m_windowHeight * 5, m_windowWidth, m_windowHeight);
-   //DrawRightWallRect(dc, m_windowCol, m_windowWidth * 3, m_windowHeight * 5, m_windowWidth, m_windowHeight*2);//door
 
    //Front wall
+   DrawFrontWallRect(dc, m_frontCol, 0, 0, houseWidth, houseHeight);
    if (detail != LowDetailLevel)
    {
-      DrawFrontWallRect(dc, m_frontCol, 0, 0, houseWidth, houseHeight);
       //Windows
       if (detail == HighDetailLevel)
       {
-         for (x = m_windowWidth; x < houseWidth - m_windowWidth; x += m_windowWidth * 2)
+         for (x = m_windowWidth; x <= houseWidth - m_windowWidth; x += m_windowWidth * 2)
          {
-            for (y = m_windowHeight; y < houseHeight - m_windowHeight; y += m_windowHeight * 2)
+            //From bottom to top
+            for (y = houseHeight - m_windowHeight*2; y >= m_windowHeight; y -= m_windowHeight * 2)
             {
                DrawFrontWallRect(dc, m_windowCol, x, y, m_windowWidth, m_windowHeight);
             }
          }
       }
    }
-   //DrawFrontWallRect(dc, m_windowCol, m_windowWidth  , m_windowHeight  , m_windowWidth, m_windowHeight);
-   //DrawFrontWallRect(dc, m_windowCol, m_windowWidth*3, m_windowHeight  , m_windowWidth, m_windowHeight);
-   //DrawFrontWallRect(dc, m_windowCol, m_windowWidth  , m_windowHeight*3, m_windowWidth, m_windowHeight);
-   //DrawFrontWallRect(dc, m_windowCol, m_windowWidth*3, m_windowHeight*3, m_windowWidth, m_windowHeight);
-   //DrawFrontWallRect(dc, m_windowCol, m_windowWidth  , m_windowHeight*5, m_windowWidth, m_windowHeight);
-   //DrawFrontWallRect(dc, m_windowCol, m_windowWidth*3, m_windowHeight*5, m_windowWidth, m_windowHeight);
    
    int wallWidth = 10;
    if (detail == HighDetailLevel)
