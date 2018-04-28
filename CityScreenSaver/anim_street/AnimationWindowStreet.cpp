@@ -219,7 +219,7 @@ void CAnimationWindowStreet::OnTimer(UINT_PTR)
    RECT rcClient;
    GetClientRect(&rcClient);
 
-   m_city.MoveHouses(&rcClient, m_cameraSpeed, m_city.m_leftRow1.size(), m_z_houseStep, m_z_camera);
+   m_city.MoveObjects(m_cameraSpeed, m_z_houseStep, m_z_camera);
    m_road.MoveForward(&rcClient, m_cameraSpeed, m_z_camera);
 
    Invalidate();
@@ -282,9 +282,7 @@ void CAnimationWindowStreet::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 //////////////////////////////////////////////////////////////////////////
 City::City(int houseCount)
-//: m_houseCount(houseCount)
-: m_leftRow1(houseCount)  //new House[houseCount])
-, m_rightRow1(houseCount) //new House[houseCount])
+: m_houseCount(houseCount)
 , m_ballBitmap(IDB_BALL)
 {
    srand((unsigned)time(NULL));
@@ -296,8 +294,12 @@ City::City(int houseCount)
 
 City::~City()
 {
-//   delete[] m_housesLeft;
-//   delete[] m_housesRight;
+   DestroyRow(m_leftRow1);
+   DestroyRow(m_leftRow2);
+   DestroyRow(m_leftRow3);
+   DestroyRow(m_rightRow1);
+   DestroyRow(m_rightRow2);
+   DestroyRow(m_rightRow3);
 }
 
 static double RangedRand(int range_min, int range_max)
@@ -313,38 +315,14 @@ static int RangedRandInt(int range_min, int range_max)
    return (int)RangedRand(range_min, range_max);
 }
 
-
-void City::InitCityRow(CRect &rc, int xPos, std::vector<House> &m_rightRow1, double groundHeight, double z_houseStep)
-{
-   double houseHeight = House::GetHouseHeight(&rc);
-   double houseWidth = House::GetHouseWidth(&rc);
-   double windowHeight = House::GetWindowHeight(&rc);
-   double windowWidth = House::GetWindowWidth(&rc);
-#define MAX_FLOOR_NUMBER (14)
-   int depth = 0;
-   for (int i = 0; i < m_rightRow1.size(); i++)
-   {
-      //double h = RangedRand(houseHeight / 2, houseHeight * 2);
-      double h = RangedRandInt(1, MAX_FLOOR_NUMBER)*windowHeight * 2 + windowHeight;
-      double w = RangedRand(houseWidth, houseWidth * 3);
-      double d = RangedRand(houseWidth, houseWidth * 2);
-      m_rightRow1[i].SetPos(xPos, groundHeight - h, depth);
-      m_rightRow1[i].SetSize(w, h, d);
-      m_rightRow1[i].m_windowHeight = windowHeight;
-      m_rightRow1[i].m_windowWidth = windowWidth;
-      depth += z_houseStep;
-
-      COLORREF frontCol, sideCol;
-      House::GenerateColor(frontCol, sideCol);
-      m_rightRow1[i].SetColor(frontCol, sideCol);
-   }
-}
-
 void City::Init(CRect & rc, double z_houseStep, double groundHeight)
 {
 
    //////////////////////////////////////////////////////////////////////////
-
+   MAX_HOUSE_HEIGHT = House::GetMaxHouseHeight(&rc);
+   MAX_HOUSE_WIDTH = House::GetMaxHouseWidth(&rc);
+   WINDOW_HEIGHT = House::GetWindowHeight(&rc);
+   WINDOW_WIDTH = House::GetWindowWidth(&rc);
 
    int i;
    //////////////////////////////////////////////////////////////////////////
@@ -355,30 +333,89 @@ void City::Init(CRect & rc, double z_houseStep, double groundHeight)
    }
 
    //////////////////////////////////////////////////////////////////////////
-   //Init right row of houses
-   InitCityRow(rc, rc.right, m_rightRow1, groundHeight, z_houseStep);
-   InitCityRow(rc, 0, m_leftRow1, groundHeight, z_houseStep);
+   m_rightRow1.assign(m_houseCount, NULL);
+   m_rightRow2.assign(m_houseCount, NULL);
+   m_rightRow3.assign(m_houseCount, NULL);
+   m_leftRow1.assign(m_houseCount, NULL);
+   m_leftRow2.assign(m_houseCount, NULL);
+   m_leftRow3.assign(m_houseCount, NULL);
 
-   ////Init left row of houses
-   //depth = 0;
-   //for (i = 0; i < m_leftRow1.size(); i++)
-   //{
-   //   //double h = RangedRand(houseHeight / 2, houseHeight * 2);
-   //   //Random # of floors
-   //   double h = RangedRandInt(1, MAX_FLOOR_NUMBER/2)*windowHeight * 2 + windowHeight;
-   //   double w = RangedRand(houseWidth, houseWidth * 3);
-   //   double d = RangedRand(houseWidth, houseWidth * 2);
-   //   m_leftRow1[i].SetPos(0 /*-rc.right / 4*/ - w, groundHeight - h, depth);
-   //   m_leftRow1[i].SetSize(w, h, d);
-   //   m_leftRow1[i].m_windowHeight = windowHeight;
-   //   m_leftRow1[i].m_windowWidth = windowWidth;
-   //   depth += z_houseStep;
-   //
-   //   COLORREF frontCol, sideCol;
-   //   House::GenerateColor(frontCol, sideCol);
-   //   m_leftRow1[i].SetColor(frontCol, sideCol);
-   //}
+   //Create side roads
+   //Create extra objects
+   //Create houses
+   CreateRow(m_leftRow1);
+   CreateRow(m_leftRow2);
+   CreateRow(m_leftRow3);
+   CreateRow(m_rightRow1);
+   CreateRow(m_rightRow2);
+   CreateRow(m_rightRow3);
+
+   //////////////////////////////////////////////////////////////////////////
+   //Init houses
+   double widthLimit = rc.right;
+   InitHouseRow(m_rightRow1, rc.right, groundHeight, z_houseStep);
+   InitHouseRow(m_rightRow2, rc.right + MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
+   InitHouseRow(m_rightRow3, rc.right + 2 * MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
+   InitHouseRow(m_leftRow1, 0 - MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
+   InitHouseRow(m_leftRow2, 0 - 2 * MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
+   InitHouseRow(m_leftRow3, 0 - 3 * MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
 }
+
+void City::CreateRow(std::vector<WorldObject*> &row)
+{
+   for (auto it = row.begin(); it != row.end(); ++it)
+   {
+      WorldObject* obj = *it;
+      if (obj == NULL)
+      {
+         //50 percent of houses
+         int p = RangedRandInt(1, 10);
+         if (p >= 8)         
+         {
+            *it = new House();
+         }
+      }
+   }
+}
+void City::DestroyRow(std::vector<WorldObject*> &row)
+{
+   for (auto it = row.begin(); it != row.end(); ++it)
+   {
+      WorldObject* obj = *it;
+      if (obj != NULL)
+         delete obj;
+      *it = NULL;
+   }
+}
+
+void City::InitHouseRow(std::vector<WorldObject*> &row, int xPos, double groundHeight, double houseDepth)
+{
+#define MAX_FLOOR_NUMBER (14)
+   int depth = 0;
+   for (auto it = row.begin(); it != row.end(); ++it)
+   {
+      WorldObject* obj = *it;
+      House * house = dynamic_cast<House*>(obj);
+      if (house)
+      {
+         //double h = RangedRand(houseHeight / 2, houseHeight * 2);
+         //double h = RangedRandInt(1, MAX_FLOOR_NUMBER)*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT;
+         double h = RangedRand(WINDOW_HEIGHT*3, MAX_HOUSE_HEIGHT);
+         double w = RangedRand(MAX_HOUSE_WIDTH/4, MAX_HOUSE_WIDTH);
+         double d = RangedRand(houseDepth/4, houseDepth);
+         house->SetPos(xPos, groundHeight - h, depth);
+         house->SetSize(w, h, d);
+         house->m_windowHeight = WINDOW_HEIGHT;
+         house->m_windowWidth = WINDOW_WIDTH;
+
+         COLORREF frontCol, sideCol;
+         House::GenerateColor(frontCol, sideCol);
+         house->SetColor(frontCol, sideCol);
+      }
+      depth += houseDepth;
+   }
+}
+
 
 void City::Draw(CDC3D & dc)
 {
@@ -386,10 +423,12 @@ void City::Draw(CDC3D & dc)
    int i;
    for (i = m_leftRow1.size() - 1; i >= 0; i--)
    {
-      world.Add(&m_leftRow1[i]);
-      world.Add(&m_rightRow1[i]);
-      //m_housesLeft[i].DoDraw(dc);
-      //m_housesRight[i].DoDraw(dc);
+      world.Add(m_leftRow1[i]);
+      world.Add(m_leftRow2[i]);
+      world.Add(m_leftRow3[i]);
+      world.Add(m_rightRow1[i]);
+      world.Add(m_rightRow2[i]);
+      world.Add(m_rightRow3[i]);
    }
 
    for (i = m_balls.size() - 1; i >= 0; i--)
@@ -400,7 +439,27 @@ void City::Draw(CDC3D & dc)
    world.DoDraw(dc);
 }
 
-void City::MoveHouses(RECT * prc, double dz, int houseCount, double z_houseStep, double z_camera)
+void City::MoveObjects(std::vector<WorldObject*> &row, double dz, double z_houseStep, double z_camera)
+{
+   for (auto it = row.begin(); it != row.end(); ++it)
+   {
+      WorldObject* obj = *it;
+      if (obj)
+      {
+         obj->m_pos.z -= dz;
+
+         //if (m_housesRight[i].m_pos.z < -z_houseStep)
+         //{
+         //   m_housesRight[i].m_pos.z = z_houseStep*m_housesRight.size();
+         //}
+         if (obj->m_pos.z < z_camera - z_houseStep)
+         {
+            obj->m_pos.z += z_houseStep*m_houseCount;
+         }
+      }
+   }
+}
+void City::MoveObjects(double dz, double z_houseStep, double z_camera)
 {
    int i;
 
@@ -410,38 +469,16 @@ void City::MoveHouses(RECT * prc, double dz, int houseCount, double z_houseStep,
 
       if (m_balls[i].m_pos.z < z_camera - z_houseStep)
       {
-         m_balls[i].m_pos.z += z_houseStep*houseCount;
+         m_balls[i].m_pos.z += z_houseStep*m_houseCount;
       }
    }
 
-   for (i = 0; i < m_rightRow1.size(); i++)
-   {
-      m_rightRow1[i].m_pos.z -= dz;
-
-      //if (m_housesRight[i].m_pos.z < -z_houseStep)
-      //{
-      //   m_housesRight[i].m_pos.z = z_houseStep*m_housesRight.size();
-      //}
-      if (m_rightRow1[i].m_pos.z < z_camera - z_houseStep)
-      {
-         m_rightRow1[i].m_pos.z += z_houseStep*houseCount;
-      }
-   }
-   
-   for (int i = 0; i < m_leftRow1.size(); i++)
-   {
-      m_leftRow1[i].m_pos.z -= dz;
-   
-      //if (m_housesLeft[i].m_pos.z < -z_houseStep)
-      //{
-      //   m_housesLeft[i].m_pos.z = z_houseStep*m_housesLeft.size();
-      //}
-      if (m_leftRow1[i].m_pos.z < z_camera-z_houseStep)
-      {
-         m_leftRow1[i].m_pos.z += z_houseStep*houseCount;
-      }
-   }
-
+   MoveObjects(m_rightRow1, dz, z_houseStep, z_camera);
+   MoveObjects(m_rightRow2, dz, z_houseStep, z_camera);
+   MoveObjects(m_rightRow3, dz, z_houseStep, z_camera);
+   MoveObjects(m_leftRow1,  dz, z_houseStep, z_camera);
+   MoveObjects(m_leftRow2,  dz, z_houseStep, z_camera);
+   MoveObjects(m_leftRow3,  dz, z_houseStep, z_camera);
 }
 
 //////////////////////////////////////////////////////////////////////////

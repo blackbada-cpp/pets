@@ -27,7 +27,10 @@ World::~World()
 
 void World::Add(WorldObject * obj)
 {
-   insert(std::pair<int, WorldObject *>(obj->m_pos.z, obj));
+   if (obj)      
+   {
+      insert(std::pair<int, WorldObject *>(obj->m_pos.z, obj));
+   }
 }
 
 void World::DoDraw(CDC3D & dc)

@@ -24,8 +24,8 @@ public:
    void SetColor(COLORREF frontCol, COLORREF sideCol);
    virtual void DoDraw(CDC3D & dc);
 
-   static LONG GetHouseWidth(RECT* prc);
-   static LONG GetHouseHeight(RECT* prc);
+   static LONG GetMaxHouseWidth(RECT* prc);
+   static LONG GetMaxHouseHeight(RECT* prc);
    static LONG GetWindowWidth(RECT* prc);
    static LONG GetWindowHeight(RECT* prc);
    static void GenerateColor(COLORREF & frontCol, COLORREF & sideCol);

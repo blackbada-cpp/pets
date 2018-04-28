@@ -104,23 +104,24 @@ void House::DoDraw(CDC3D & dc)
    DrawRoof(dc, m_roofCol, wallWidth, wallWidth, houseWidth - wallWidth - wallWidth, houseWidth - wallWidth - wallWidth);
 }
 
-LONG House::GetHouseHeight(RECT* prc)
+LONG House::GetMaxHouseHeight(RECT* prc)
 {
    //Small houses:
-   return (prc->bottom - prc->top) / 2 + (prc->bottom - prc->top) / 6;
+   //return (prc->bottom - prc->top) / 2 + (prc->bottom - prc->top) / 6;
+   return (prc->bottom - prc->top);
    
    //Skyscrapers:
    //return (prc->bottom - prc->top) * 4;
 }
 
-LONG House::GetHouseWidth(RECT* prc)
+LONG House::GetMaxHouseWidth(RECT* prc)
 {
-   return (prc->right - prc->left) / 4;
+   return (prc->right - prc->left) ;
 }
 
 LONG House::GetWindowWidth(RECT* prc)
 {
-   return GetHouseWidth(prc) / 5;
+   return GetMaxHouseWidth(prc) / 12;
 }
 
 LONG House::GetWindowHeight(RECT* prc)

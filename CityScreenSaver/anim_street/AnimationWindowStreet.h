@@ -17,7 +17,7 @@
 #define DETAILIZATION_MEDIUM (25)
 #define DETAILIZATION_LOW    (50)
 
-#define HOUSE_COUNT (300)
+#define HOUSE_COUNT (100)
 #define BALL_COUNT (40)
 
 #define X_MIN_PERCENT (-50.0)
@@ -56,12 +56,17 @@ public:
 class  City
 {
 public:
-   std::vector<House> m_leftRow1;
-   std::vector<House> m_leftRow2;
-   std::vector<House> m_leftRow3;
-   std::vector<House> m_rightRow1;
-   std::vector<House> m_rightRow2;
-   std::vector<House> m_rightRow3;
+   int m_houseCount;
+   double MAX_HOUSE_HEIGHT;
+   double MAX_HOUSE_WIDTH;
+   double WINDOW_HEIGHT;
+   double WINDOW_WIDTH;
+   std::vector<WorldObject*> m_leftRow1;
+   std::vector<WorldObject*> m_leftRow2;
+   std::vector<WorldObject*> m_leftRow3;
+   std::vector<WorldObject*> m_rightRow1;
+   std::vector<WorldObject*> m_rightRow2;
+   std::vector<WorldObject*> m_rightRow3;
    //int m_houseCount;
 
    CBitmapObject m_ballBitmap;
@@ -73,10 +78,13 @@ public:
 
    void Init(CRect & rc, double z_houseStep, double groundHeight);
    void Draw(CDC3D & dc);
-   void MoveHouses(RECT * prc, double dz, int houseCount, double z_houseStep, double z_camera);
+   void MoveObjects(std::vector<WorldObject*> &row, double dz, double z_houseStep, double z_camera);
+   void MoveObjects(double dz, double z_houseStep, double z_camera);
 
 protected:
-   void InitCityRow(CRect &rc, int xPos, std::vector<House> &m_rightRow1, double groundHeight, double z_houseStep);
+   void CreateRow(std::vector<WorldObject*> &row);
+   void DestroyRow(std::vector<WorldObject*> &row);
+   void InitHouseRow(std::vector<WorldObject*> &row, int xPos, double groundHeight, double houseDepth);
 
 };
 
