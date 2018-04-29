@@ -106,7 +106,7 @@ public:
    void MoveObjects(double dz, double z_houseStep, double z_camera);
 
 protected:
-   void CreateRow(std::vector<WorldObject*> &row);
+   void CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent);
    void DestroyRow(std::vector<WorldObject*> &row);
    void InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth);
 

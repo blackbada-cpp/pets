@@ -319,7 +319,7 @@ void House::GenerateHouse(int cellXPos, int cellZPos, double groundHeight, doubl
    //double h = RangedRand(houseHeight / 2, houseHeight * 2);
    //double h = RangedRandInt(1, MAX_FLOOR_NUMBER)*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT;
    double h = RangedRand(WINDOW_HEIGHT * 3, MAX_HOUSE_HEIGHT);
-   double w = RangedRand(cellWidth / 4, cellWidth);
+   double w = RangedRand(MAX_HOUSE_WIDTH / 4, MAX_HOUSE_WIDTH);
    double d = RangedRand(cellDepth / 4, cellDepth);
    double xShift = RangedRand(0, cellWidth-w);
    SetPos(cellXPos + xShift, groundHeight - h, cellZPos);

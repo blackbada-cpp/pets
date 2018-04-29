@@ -339,9 +339,6 @@ void City::Init(CRect & rc, double z_houseStep, double groundHeight)
       ball -> SetPos(RangedRand(0, rc.Width()), groundHeight, RangedRand(0, z_houseStep * m_houseCount));
       m_balls.push_back(ball);
    }
-   for (i = 0; i < m_balls.size(); i++)
-   {
-   }
 
    //////////////////////////////////////////////////////////////////////////
    m_rightRow1.assign(m_houseCount, NULL);
@@ -354,41 +351,55 @@ void City::Init(CRect & rc, double z_houseStep, double groundHeight)
    //Create side roads
    //Create extra objects
    //Create houses
-   CreateRow(m_leftRow1);
-   CreateRow(m_leftRow2);
-   CreateRow(m_leftRow3);
-   CreateRow(m_rightRow1);
-   CreateRow(m_rightRow2);
-   CreateRow(m_rightRow3);
+   CreateRow(m_leftRow1,  0, (int)(m_houseCount*0.5), 50);
+   CreateRow(m_leftRow2,  0, (int)(m_houseCount*0.5), 40);
+   CreateRow(m_leftRow3,  0, (int)(m_houseCount*0.5), 10);
+   CreateRow(m_rightRow1, 0, (int)(m_houseCount*0.5), 50);
+   CreateRow(m_rightRow2, 0, (int)(m_houseCount*0.5), 40);
+   CreateRow(m_rightRow3, 0, (int)(m_houseCount*0.5), 10);
+   CreateRow(m_leftRow1,  (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 30);
+   CreateRow(m_leftRow2,  (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 10);
+   CreateRow(m_leftRow3,  (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 5);
+   CreateRow(m_rightRow1, (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 30);
+   CreateRow(m_rightRow2, (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 10);
+   CreateRow(m_rightRow3, (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 5);
 
    //////////////////////////////////////////////////////////////////////////
    //Init houses
    double widthLimit = rc.right;
-   InitCellRow(m_rightRow1, rc.right                             , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_rightRow2, rc.right + House::MAX_HOUSE_WIDTH    , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_rightRow3, rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_leftRow1,  0 - House::MAX_HOUSE_WIDTH           , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_leftRow2,  0 - 2 * House::MAX_HOUSE_WIDTH       , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_leftRow3,  0 - 4 * House::MAX_HOUSE_WIDTH       , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_rightRow1, rc.right                             , groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_rightRow2, rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_rightRow3, rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_leftRow1,  0 - 2 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_leftRow2,  0 - 4 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_leftRow3,  0 - 6 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
 }
 
-void City::CreateRow(std::vector<WorldObject*> &row)
+void City::CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent)
 {
-   for (auto it = row.begin(); it != row.end(); ++it)
+   int percentBall = 10;
+   //for (auto it = row.begin(); it != row.end(); ++it)
+   for (int i = iStart; i < iEnd; i++)
    {
-      WorldObject* obj = *it;
+      //WorldObject* obj = *it;
+      WorldObject* obj = row[i];
       if (obj == NULL)
       {
          //50 percent of houses
-         int p = RangedRandInt(1, 10);
-         if (p >= 5)
+         int pHouse = RangedRandInt(0, 100);
+         if (pHouse <= housePercent)
          {
-            *it = new House();
+            //*it = new House();
+            row[i] = new House();
          }
          else 
          {
-            *it = new Ball();
-
+            int pBall = RangedRandInt(0, 100);
+            if (pBall <= percentBall)
+            {
+               //*it = new Ball();
+               row[i] = new Ball();
+            }
          }
       }
    }
