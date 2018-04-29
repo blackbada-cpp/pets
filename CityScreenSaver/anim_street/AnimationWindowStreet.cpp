@@ -231,7 +231,7 @@ void CAnimationWindowStreet::DrawStreet(CDC3D & dc, RECT* prc)
    //http://www.rapidtables.com/web/color/RGB_Color.htm
    COLORREF colNight = RGB(0, 0, 205);
    COLORREF colDay = RGB(30, 144, 255);// RGB(0, 191, 255);
-   COLORREF colGrass = COLOR_GRASSS_BLADE_OF_GRASS;
+   COLORREF colGrass = COLOR_GRASSS_MEADOW;// COLOR_GRASSS_BLADE_OF_GRASS;
    CBrush brushDay; brushDay.CreateSolidBrush(colDay);
    CBrush brushLawn; brushLawn.CreateSolidBrush(colGrass);
 
@@ -283,17 +283,13 @@ void CAnimationWindowStreet::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 //////////////////////////////////////////////////////////////////////////
 City::City(int houseCount)
 : m_houseCount(houseCount)
-, m_ballBitmap(IDB_BALL)
 {
    srand((unsigned)time(NULL));
-   for (int i = 0; i < BALL_COUNT; i++)   
-   {
-      m_balls.push_back(BitmapObject(m_ballBitmap));
-   }
 }
 
 City::~City()
 {
+   DestroyRow(m_balls);
    DestroyRow(m_leftRow1);
    DestroyRow(m_leftRow2);
    DestroyRow(m_leftRow3);
@@ -302,7 +298,18 @@ City::~City()
    DestroyRow(m_rightRow3);
 }
 
-static double RangedRand(int range_min, int range_max)
+void City::DestroyRow(std::vector<WorldObject*> &row)
+{
+   for (auto it = row.begin(); it != row.end(); ++it)
+   {
+      WorldObject* obj = *it;
+      if (obj != NULL)
+         delete obj;
+      *it = NULL;
+   }
+}
+
+double RangedRand(int range_min, int range_max)
 {
    // Generate random numbers in the half-closed interval
    // [range_min, range_max). In other words,
@@ -310,26 +317,30 @@ static double RangedRand(int range_min, int range_max)
    double u = (double)rand() / (RAND_MAX + 1) * (range_max - range_min) + range_min;
    return u;
 }
-static int RangedRandInt(int range_min, int range_max)
+int RangedRandInt(int range_min, int range_max)
 {
    return (int)RangedRand(range_min, range_max);
 }
 
 void City::Init(CRect & rc, double z_houseStep, double groundHeight)
 {
-
    //////////////////////////////////////////////////////////////////////////
-   MAX_HOUSE_HEIGHT = House::GetMaxHouseHeight(&rc);
-   MAX_HOUSE_WIDTH = House::GetMaxHouseWidth(&rc);
-   WINDOW_HEIGHT = House::GetWindowHeight(&rc);
-   WINDOW_WIDTH = House::GetWindowWidth(&rc);
+   House::MAX_HOUSE_HEIGHT = House::GetMaxHouseHeight(&rc);
+   House::MAX_HOUSE_WIDTH = House::GetMaxHouseWidth(&rc);
+   House::WINDOW_HEIGHT = House::GetWindowHeight(&rc);
+   House::WINDOW_WIDTH = House::GetWindowWidth(&rc);
 
    int i;
    //////////////////////////////////////////////////////////////////////////
    // Init random balls
+   for (int i = 0; i < BALL_COUNT; i++)
+   {
+      Ball * ball = new Ball();
+      ball -> SetPos(RangedRand(0, rc.Width()), groundHeight, RangedRand(0, z_houseStep * m_houseCount));
+      m_balls.push_back(ball);
+   }
    for (i = 0; i < m_balls.size(); i++)
    {
-      m_balls[i].SetPos(RangedRand(0, rc.Width()), groundHeight, RangedRand(0, z_houseStep * m_rightRow1.size()));
    }
 
    //////////////////////////////////////////////////////////////////////////
@@ -353,12 +364,12 @@ void City::Init(CRect & rc, double z_houseStep, double groundHeight)
    //////////////////////////////////////////////////////////////////////////
    //Init houses
    double widthLimit = rc.right;
-   InitHouseRow(m_rightRow1, rc.right, groundHeight, z_houseStep);
-   InitHouseRow(m_rightRow2, rc.right + MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
-   InitHouseRow(m_rightRow3, rc.right + 2 * MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
-   InitHouseRow(m_leftRow1, 0 - MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
-   InitHouseRow(m_leftRow2, 0 - 2 * MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
-   InitHouseRow(m_leftRow3, 0 - 3 * MAX_HOUSE_WIDTH, groundHeight, z_houseStep);
+   InitCellRow(m_rightRow1, rc.right                             , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_rightRow2, rc.right + House::MAX_HOUSE_WIDTH    , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_rightRow3, rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_leftRow1,  0 - House::MAX_HOUSE_WIDTH           , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_leftRow2,  0 - 2 * House::MAX_HOUSE_WIDTH       , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_leftRow3,  0 - 4 * House::MAX_HOUSE_WIDTH       , groundHeight, House::MAX_HOUSE_WIDTH, z_houseStep);
 }
 
 void City::CreateRow(std::vector<WorldObject*> &row)
@@ -370,25 +381,20 @@ void City::CreateRow(std::vector<WorldObject*> &row)
       {
          //50 percent of houses
          int p = RangedRandInt(1, 10);
-         if (p >= 8)         
+         if (p >= 5)
          {
             *it = new House();
+         }
+         else 
+         {
+            *it = new Ball();
+
          }
       }
    }
 }
-void City::DestroyRow(std::vector<WorldObject*> &row)
-{
-   for (auto it = row.begin(); it != row.end(); ++it)
-   {
-      WorldObject* obj = *it;
-      if (obj != NULL)
-         delete obj;
-      *it = NULL;
-   }
-}
 
-void City::InitHouseRow(std::vector<WorldObject*> &row, int xPos, double groundHeight, double houseDepth)
+void City::InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth)
 {
 #define MAX_FLOOR_NUMBER (14)
    int depth = 0;
@@ -398,21 +404,17 @@ void City::InitHouseRow(std::vector<WorldObject*> &row, int xPos, double groundH
       House * house = dynamic_cast<House*>(obj);
       if (house)
       {
-         //double h = RangedRand(houseHeight / 2, houseHeight * 2);
-         //double h = RangedRandInt(1, MAX_FLOOR_NUMBER)*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT;
-         double h = RangedRand(WINDOW_HEIGHT*3, MAX_HOUSE_HEIGHT);
-         double w = RangedRand(MAX_HOUSE_WIDTH/4, MAX_HOUSE_WIDTH);
-         double d = RangedRand(houseDepth/4, houseDepth);
-         house->SetPos(xPos, groundHeight - h, depth);
-         house->SetSize(w, h, d);
-         house->m_windowHeight = WINDOW_HEIGHT;
-         house->m_windowWidth = WINDOW_WIDTH;
-
-         COLORREF frontCol, sideCol;
-         House::GenerateColor(frontCol, sideCol);
-         house->SetColor(frontCol, sideCol);
+         house->GenerateHouse(cellXPos, depth, groundHeight, cellWidth, cellDepth);
       }
-      depth += houseDepth;
+      else
+      {
+         Ball * ball = dynamic_cast<Ball*>(obj);
+         if (ball)
+         {
+            ball->GenerateBall(cellXPos, depth, groundHeight, cellWidth, cellDepth);
+         }
+      }
+      depth += cellDepth;
    }
 }
 
@@ -433,7 +435,7 @@ void City::Draw(CDC3D & dc)
 
    for (i = m_balls.size() - 1; i >= 0; i--)
    {
-      world.Add(&m_balls[i]);
+      world.Add(m_balls[i]);
    }
 
    world.DoDraw(dc);
@@ -448,10 +450,6 @@ void City::MoveObjects(std::vector<WorldObject*> &row, double dz, double z_house
       {
          obj->m_pos.z -= dz;
 
-         //if (m_housesRight[i].m_pos.z < -z_houseStep)
-         //{
-         //   m_housesRight[i].m_pos.z = z_houseStep*m_housesRight.size();
-         //}
          if (obj->m_pos.z < z_camera - z_houseStep)
          {
             obj->m_pos.z += z_houseStep*m_houseCount;
@@ -461,18 +459,7 @@ void City::MoveObjects(std::vector<WorldObject*> &row, double dz, double z_house
 }
 void City::MoveObjects(double dz, double z_houseStep, double z_camera)
 {
-   int i;
-
-   for (i = 0; i < m_balls.size(); ++i)
-   {
-      m_balls[i].m_pos.z -= dz;
-
-      if (m_balls[i].m_pos.z < z_camera - z_houseStep)
-      {
-         m_balls[i].m_pos.z += z_houseStep*m_houseCount;
-      }
-   }
-
+   MoveObjects(m_balls,     dz, z_houseStep, z_camera);
    MoveObjects(m_rightRow1, dz, z_houseStep, z_camera);
    MoveObjects(m_rightRow2, dz, z_houseStep, z_camera);
    MoveObjects(m_rightRow3, dz, z_houseStep, z_camera);
@@ -485,7 +472,11 @@ void City::MoveObjects(double dz, double z_houseStep, double z_camera)
 BitmapObject::BitmapObject(CBitmapObject & m_bitmap)
 : m_bitmap(m_bitmap)
 {
-
+   BITMAP bm;
+   m_bitmap.m_bitmap.GetBitmap(&bm);
+   double w = bm.bmWidth;
+   double h = bm.bmHeight;
+   SetSize(w, h, 0);
 }
 
 void BitmapObject::DoDraw(CDC3D & dc)
@@ -496,6 +487,7 @@ void BitmapObject::DoDraw(CDC3D & dc)
    double h = bm.bmHeight;
    dc.DrawBitmapObject(m_bitmap, m_pos.x, m_pos.y, w, h, m_pos.z);
 }
+
 
 //////////////////////////////////////////////////////////////////////////
 Road::Road(double length, double houseStep)
@@ -684,4 +676,36 @@ void Road::MoveForward(RECT * prc, double dz, double z_camera)
    {
       m_zStart += m_houseStep;
    }
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+class BitmapHolder
+{
+public:
+   CBitmapObject m_ballBitmap;
+   BitmapHolder()
+      : m_ballBitmap(IDB_BALL)
+   {
+   }
+   static BitmapHolder & Instance()
+   {
+      static BitmapHolder st_instance;
+      return st_instance;
+   }
+};
+
+
+Ball::Ball() : BitmapObject(BitmapHolder::Instance().m_ballBitmap)
+{
+
+}
+
+void Ball::GenerateBall(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth)
+{
+   double h = GetSize().h;
+   double w = GetSize().w;
+   double xShift = RangedRand(0, cellWidth - w);
+   double dShift = RangedRand(0, cellDepth - 1);
+   SetPos(cellXPos + xShift, groundHeight - h, cellZPos + dShift);
 }

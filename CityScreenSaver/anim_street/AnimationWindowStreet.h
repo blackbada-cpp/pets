@@ -41,7 +41,28 @@
 #define COLOR_GRASSS_BLADE_OF_GRASS RGB(1,166,17)
 
 
+//http://www.colourlovers.com/palette/896737/City_Sunset
+#define COLOR_CITY_SUNSET_1 RGB(255, 171, 3)
+#define COLOR_CITY_SUNSET_2 RGB(252, 127, 3)
+#define COLOR_CITY_SUNSET_3 RGB(252, 57, 3)
+#define COLOR_CITY_SUNSET_4 RGB(209, 2, 78)
+#define COLOR_CITY_SUNSET_5 RGB(166, 2, 108)
+
+//http://www.colourlovers.com/palette/1256070/Sunset_slowly
+#define COLOR_CITY_SUNSET_SIDE_1 RGB(245, 159, 50)
+#define COLOR_CITY_SUNSET_SIDE_2 RGB(252, 143, 40)
+#define COLOR_CITY_SUNSET_SIDE_3 RGB(255, 95, 45)
+#define COLOR_CITY_SUNSET_SIDE_4 RGB(235, 61, 62)
+#define COLOR_CITY_SUNSET_SIDE_5 RGB(196, 35, 68)
+
+//http://www.colourlovers.com/palette/758733/Art_Glass_Screen
+#define COLOR_WINDOW_1 RGB(254, 252, 174)
+#define COLOR_WINDOW_2 RGB(17, 53, 105)
+#define COLOR_WINDOW_3 RGB(175, 192, 98)
+#define COLOR_WINDOW_4 RGB(85, 147, 48)
+#define COLOR_WINDOW_5 RGB(2, 119, 98)
 class CDC3D;
+
 
 class BitmapObject : public WorldObject
 {
@@ -53,14 +74,18 @@ public:
    virtual void DoDraw(CDC3D & dc);
 };
 
+class Ball : public BitmapObject
+{
+public:
+   Ball();
+   void GenerateBall(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth);
+};
+
 class  City
 {
 public:
    int m_houseCount;
-   double MAX_HOUSE_HEIGHT;
-   double MAX_HOUSE_WIDTH;
-   double WINDOW_HEIGHT;
-   double WINDOW_WIDTH;
+
    std::vector<WorldObject*> m_leftRow1;
    std::vector<WorldObject*> m_leftRow2;
    std::vector<WorldObject*> m_leftRow3;
@@ -69,8 +94,7 @@ public:
    std::vector<WorldObject*> m_rightRow3;
    //int m_houseCount;
 
-   CBitmapObject m_ballBitmap;
-   std::vector<BitmapObject> m_balls;
+   std::vector<WorldObject*> m_balls;
 
 public:
    City(int houseCount);
@@ -84,7 +108,7 @@ public:
 protected:
    void CreateRow(std::vector<WorldObject*> &row);
    void DestroyRow(std::vector<WorldObject*> &row);
-   void InitHouseRow(std::vector<WorldObject*> &row, int xPos, double groundHeight, double houseDepth);
+   void InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth);
 
 };
 
@@ -163,3 +187,6 @@ protected:
 
    DECLARE_MESSAGE_MAP()
 };
+
+extern double RangedRand(int range_min, int range_max);
+extern int RangedRandInt(int range_min, int range_max);

@@ -15,12 +15,18 @@ public:
    int m_windowHeight;
    int m_windowWidth;
 
+   static double MAX_HOUSE_HEIGHT;
+   static double MAX_HOUSE_WIDTH;
+   static double WINDOW_HEIGHT;
+   static double WINDOW_WIDTH;
+
 public:
    House();
    House(POINT3D &pos, SIZE3D &size);
    House(int x, int y, int z, int w, int h, int d);
    ~House();
    
+   void GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth);
    void SetColor(COLORREF frontCol, COLORREF sideCol);
    virtual void DoDraw(CDC3D & dc);
 

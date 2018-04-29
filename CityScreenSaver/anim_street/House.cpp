@@ -1,6 +1,12 @@
 #include "stdafx.h"
 #include "House.h"
+#include "AnimationWindowStreet.h"
 
+
+double House::MAX_HOUSE_HEIGHT = 50;
+double House::MAX_HOUSE_WIDTH = 50;
+double House::WINDOW_HEIGHT = 10;
+double House::WINDOW_WIDTH = 10;
 
 
 House::House()
@@ -108,7 +114,7 @@ LONG House::GetMaxHouseHeight(RECT* prc)
 {
    //Small houses:
    //return (prc->bottom - prc->top) / 2 + (prc->bottom - prc->top) / 6;
-   return (prc->bottom - prc->top);
+   return (prc->bottom - prc->top)*2;
    
    //Skyscrapers:
    //return (prc->bottom - prc->top) * 4;
@@ -272,36 +278,57 @@ void House::SetColor(COLORREF frontCol, COLORREF sideCol)
 }
 
 //http://www.rapidtables.com/web/color/RGB_Color.htm
-#define COLORS_MAX (4)
+#define FRONT_COLOR_1 RGB(255, 165, 0),  //orange
+#define FRONT_COLOR_1 RGB(255, 235, 205),//
+#define FRONT_COLOR_1 RGB(107, 142, 35), //olive drab
+#define FRONT_COLOR_1 RGB(64, 224, 208), //turquoise
+
+#define SIDE_COLOR_1 RGB(255, 140, 0),  //dark orange
+#define SIDE_COLOR_1 RGB(245, 222, 179),//
+#define SIDE_COLOR_1 RGB(85, 107, 47),  //dark olive green
+#define SIDE_COLOR_1 RGB(0, 206, 209),  //dark turquoise
+
+#define COLORS_MAX (5)
 static COLORREF st_frontColors[COLORS_MAX] =
 {
-   RGB(255, 165, 0),  //orange
-   RGB(255, 235, 205),//
-   RGB(107, 142, 35), //olive drab
-   RGB(64, 224, 208), //turquoise
+   COLOR_CITY_SUNSET_1,
+   COLOR_CITY_SUNSET_2,
+   COLOR_CITY_SUNSET_3,
+   COLOR_CITY_SUNSET_4,
+   COLOR_CITY_SUNSET_5
 };
 
 static COLORREF st_sideColors[COLORS_MAX] =
 {
-   RGB(255, 140, 0),  //dark orange
-   RGB(245, 222, 179),//
-   RGB(85, 107, 47),  //dark olive green
-   RGB(0, 206, 209),  //dark turquoise
+   COLOR_CITY_SUNSET_SIDE_1,
+   COLOR_CITY_SUNSET_SIDE_2,
+   COLOR_CITY_SUNSET_SIDE_3,
+   COLOR_CITY_SUNSET_SIDE_4,
+   COLOR_CITY_SUNSET_SIDE_5
 };
-
-static int RangedRand(int range_min, int range_max)
-{
-   // Generate random numbers in the half-closed interval
-   // [range_min, range_max). In other words,
-   // range_min <= random number < range_max
-   int u = (double)rand() / (RAND_MAX + 1) * (range_max - range_min) + range_min;
-   return u;
-}
 
 void House::GenerateColor(COLORREF & frontCol, COLORREF & sideCol)
 {
-   int i = RangedRand(0, COLORS_MAX-1);
+   int i = RangedRandInt(0, COLORS_MAX-1);
    frontCol = st_frontColors[i];
    sideCol = st_sideColors[i];
+}
+
+void House::GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth)
+{
+   //double h = RangedRand(houseHeight / 2, houseHeight * 2);
+   //double h = RangedRandInt(1, MAX_FLOOR_NUMBER)*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT;
+   double h = RangedRand(WINDOW_HEIGHT * 3, MAX_HOUSE_HEIGHT);
+   double w = RangedRand(cellWidth / 4, cellWidth);
+   double d = RangedRand(cellDepth / 4, cellDepth);
+   double xShift = RangedRand(0, cellWidth-w);
+   SetPos(cellXPos + xShift, groundHeight - h, cellZPos);
+   SetSize(w, h, d);
+   m_windowHeight = WINDOW_HEIGHT;
+   m_windowWidth = WINDOW_WIDTH;
+
+   COLORREF frontCol, sideCol;
+   House::GenerateColor(frontCol, sideCol);
+   SetColor(frontCol, sideCol);
 }
 
