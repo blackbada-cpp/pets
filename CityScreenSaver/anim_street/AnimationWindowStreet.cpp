@@ -60,15 +60,15 @@ END_MESSAGE_MAP()
 
 
 CAnimationWindowStreet::CAnimationWindowStreet(CWnd* pParent /*=NULL*/)
-: m_city(HOUSE_COUNT)
+: m_city()
 , m_road(HOUSE_COUNT * m_z_houseStep, m_z_houseStep)
 , m_pressed(key_Nothing)
 , m_cxPercent(X_INIT_PERCENT)
 , m_cyPercent(Y_INIT_PERCENT)
 , m_cameraSpeed(CAMERA_SPEED)
+, m_z_camera(Z_CAMERA_INIT)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-   m_z_camera = 0.0;
    m_planeWidth = 100.0;
    m_planeHeight = 100.0;
 }
@@ -159,7 +159,14 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_planeHeight = rc.Height();
 
 
-   m_city.Init(rc, m_z_houseStep, ::GetGroundHeight(&rc));
+#ifdef MOVE_CAMERA
+   m_z_camera_limit = m_z_houseStep*HOUSE_COUNT;
+#endif
+   m_city.Init(rc, HOUSE_COUNT, m_z_houseStep, ::GetGroundHeight(&rc));
+   //Duplicate city
+   m_city2.CopyFrom(m_city);
+   m_city2.MoveObjects(m_city.GetCityDepth());
+   
    m_road.Init(rc);
 
    return CWnd::OnCreate(cs);
@@ -210,18 +217,23 @@ void CAnimationWindowStreet::OnTimer(UINT_PTR)
       break;
    }
 
-   //m_z_camera = (m_z_camera + m_cameraSpeed) % m_z_camera_limit;
+#ifdef MOVE_CAMERA
+   m_z_camera = m_z_camera + m_cameraSpeed;
+   if (m_z_camera > m_z_camera_limit)
+      m_z_camera = Z_CAMERA_INIT;
+#endif
    //Move camera forever:
    //m_z_camera += m_cameraSpeed;
    //flip camera back for tonnel: if (m_z_camera > m_z_houseStep)
    //flip camera back for tonnel:    m_z_camera = 0.0;
-   //m_z_camera_limit;
    RECT rcClient;
    GetClientRect(&rcClient);
 
+#ifndef MOVE_CAMERA
+   //Move objects instead of camera
    m_city.MoveObjects(m_cameraSpeed, m_z_houseStep, m_z_camera);
    m_road.MoveForward(&rcClient, m_cameraSpeed, m_z_camera);
-
+#endif
    Invalidate();
 }
 
@@ -248,8 +260,12 @@ void CAnimationWindowStreet::DrawStreet(CDC3D & dc, RECT* prc)
    m_road.Draw(dc, prc);
 
    //Draw 3D Objects
-   //m_world.DoDraw(dc, prc);
-   m_city.Draw(dc);
+   World world;
+   m_city2.PrepareDraw(world);
+   m_city.PrepareDraw(world);
+
+   world.DoDraw(dc);
+
 }
 
 
@@ -281,8 +297,9 @@ void CAnimationWindowStreet::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 }
 
 //////////////////////////////////////////////////////////////////////////
-City::City(int houseCount)
-: m_houseCount(houseCount)
+City::City()
+: m_cellCount(0)
+, m_cellDepth(0.0)
 {
    srand((unsigned)time(NULL));
 }
@@ -296,6 +313,20 @@ City::~City()
    DestroyRow(m_rightRow1);
    DestroyRow(m_rightRow2);
    DestroyRow(m_rightRow3);
+}
+
+void City::CopyFrom(City &other)
+{
+   m_cellCount = other.m_cellCount;
+   m_cellDepth = other.m_cellDepth;
+
+   CopyRow(m_balls    , other.m_balls    );
+   CopyRow(m_leftRow1 , other.m_leftRow1 );
+   CopyRow(m_leftRow2 , other.m_leftRow2 );
+   CopyRow(m_leftRow3 , other.m_leftRow3 );
+   CopyRow(m_rightRow1, other.m_rightRow1);
+   CopyRow(m_rightRow2, other.m_rightRow2);
+   CopyRow(m_rightRow3, other.m_rightRow3);
 }
 
 void City::DestroyRow(std::vector<WorldObject*> &row)
@@ -322,8 +353,11 @@ int RangedRandInt(int range_min, int range_max)
    return (int)RangedRand(range_min, range_max);
 }
 
-void City::Init(CRect & rc, double z_houseStep, double groundHeight)
+void City::Init(CRect & rc, int cellCount, double cellDepth, double groundHeight)
 {
+   m_cellCount = cellCount;
+   m_cellDepth = cellDepth;
+
    //////////////////////////////////////////////////////////////////////////
    House::MAX_HOUSE_HEIGHT = House::GetMaxHouseHeight(&rc);
    House::MAX_HOUSE_WIDTH = House::GetMaxHouseWidth(&rc);
@@ -336,45 +370,54 @@ void City::Init(CRect & rc, double z_houseStep, double groundHeight)
    for (int i = 0; i < BALL_COUNT; i++)
    {
       Ball * ball = new Ball();
-      ball -> SetPos(RangedRand(0, rc.Width()), groundHeight, RangedRand(0, z_houseStep * m_houseCount));
+      ball -> SetPos(RangedRand(0, rc.Width()), groundHeight, RangedRand(0, GetCityDepth()));
       m_balls.push_back(ball);
    }
 
    //////////////////////////////////////////////////////////////////////////
-   m_rightRow1.assign(m_houseCount, NULL);
-   m_rightRow2.assign(m_houseCount, NULL);
-   m_rightRow3.assign(m_houseCount, NULL);
-   m_leftRow1.assign(m_houseCount, NULL);
-   m_leftRow2.assign(m_houseCount, NULL);
-   m_leftRow3.assign(m_houseCount, NULL);
+   m_rightRow1.assign(m_cellCount, NULL);
+   m_rightRow2.assign(m_cellCount, NULL);
+   m_rightRow3.assign(m_cellCount, NULL);
+   m_leftRow1.assign(m_cellCount, NULL);
+   m_leftRow2.assign(m_cellCount, NULL);
+   m_leftRow3.assign(m_cellCount, NULL);
 
    //Create side roads
    //Create extra objects
    //Create houses
-   CreateRow(m_leftRow1,  0, (int)(m_houseCount*0.5), 50);
-   CreateRow(m_leftRow2,  0, (int)(m_houseCount*0.5), 40);
-   CreateRow(m_leftRow3,  0, (int)(m_houseCount*0.5), 10);
-   CreateRow(m_rightRow1, 0, (int)(m_houseCount*0.5), 50);
-   CreateRow(m_rightRow2, 0, (int)(m_houseCount*0.5), 40);
-   CreateRow(m_rightRow3, 0, (int)(m_houseCount*0.5), 10);
-   CreateRow(m_leftRow1,  (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 30);
-   CreateRow(m_leftRow2,  (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 10);
-   CreateRow(m_leftRow3,  (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 5);
-   CreateRow(m_rightRow1, (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 30);
-   CreateRow(m_rightRow2, (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 10);
-   CreateRow(m_rightRow3, (int)(m_houseCount*0.5), (int)(m_houseCount*0.7), 5);
+   CreateRow(m_leftRow1,  0, (int)(m_cellCount*0.5), 50);
+   CreateRow(m_leftRow2,  0, (int)(m_cellCount*0.5), 40);
+   CreateRow(m_leftRow3,  0, (int)(m_cellCount*0.5), 10);
+   CreateRow(m_rightRow1, 0, (int)(m_cellCount*0.5), 50);
+   CreateRow(m_rightRow2, 0, (int)(m_cellCount*0.5), 40);
+   CreateRow(m_rightRow3, 0, (int)(m_cellCount*0.5), 10);
+   CreateRow(m_leftRow1,  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
+   CreateRow(m_leftRow2,  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
+   CreateRow(m_leftRow3,  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
+   CreateRow(m_rightRow1, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
+   CreateRow(m_rightRow2, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
+   CreateRow(m_rightRow3, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
 
    //////////////////////////////////////////////////////////////////////////
    //Init houses
    double widthLimit = rc.right;
-   InitCellRow(m_rightRow1, rc.right                             , groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_rightRow2, rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_rightRow3, rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_leftRow1,  0 - 2 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_leftRow2,  0 - 4 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
-   InitCellRow(m_leftRow3,  0 - 6 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, z_houseStep);
+   InitCellRow(m_rightRow1, rc.right                             , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
+   InitCellRow(m_rightRow2, rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
+   InitCellRow(m_rightRow3, rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
+   InitCellRow(m_leftRow1,  0 - 2 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
+   InitCellRow(m_leftRow2,  0 - 4 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
+   InitCellRow(m_leftRow3,  0 - 6 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
 }
 
+void City::CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom)
+{
+   for (auto it = rowFrom.begin(); it != rowFrom.end(); ++it)
+   {
+      WorldObject* objFrom = *it;
+      WorldObject* objCopy = objFrom ? objFrom->Clone() : NULL;
+      row.push_back(objCopy);
+   }
+}
 void City::CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent)
 {
    int percentBall = 10;
@@ -430,9 +473,8 @@ void City::InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double grou
 }
 
 
-void City::Draw(CDC3D & dc)
+void City::PrepareDraw(World & world)
 {
-   World world;
    int i;
    for (i = m_leftRow1.size() - 1; i >= 0; i--)
    {
@@ -448,10 +490,9 @@ void City::Draw(CDC3D & dc)
    {
       world.Add(m_balls[i]);
    }
-
-   world.DoDraw(dc);
 }
 
+#ifndef MOVE_CAMERA
 void City::MoveObjects(std::vector<WorldObject*> &row, double dz, double z_houseStep, double z_camera)
 {
    for (auto it = row.begin(); it != row.end(); ++it)
@@ -460,14 +501,18 @@ void City::MoveObjects(std::vector<WorldObject*> &row, double dz, double z_house
       if (obj)
       {
          obj->m_pos.z -= dz;
-
+         
+         //flip objects backwards to allow endless camera moving
          if (obj->m_pos.z < z_camera - z_houseStep)
          {
-            obj->m_pos.z += z_houseStep*m_houseCount;
+            obj->m_pos.z += z_houseStep * m_cellCount;
          }
       }
    }
 }
+#endif
+
+#ifndef MOVE_CAMERA
 void City::MoveObjects(double dz, double z_houseStep, double z_camera)
 {
    MoveObjects(m_balls,     dz, z_houseStep, z_camera);
@@ -478,8 +523,39 @@ void City::MoveObjects(double dz, double z_houseStep, double z_camera)
    MoveObjects(m_leftRow2,  dz, z_houseStep, z_camera);
    MoveObjects(m_leftRow3,  dz, z_houseStep, z_camera);
 }
+#endif
+
+void City::MoveObjects(std::vector<WorldObject*> &row, double dz)
+{
+   for (auto it = row.begin(); it != row.end(); ++it)
+   {
+      WorldObject* obj = *it;
+      if (obj)
+      {
+         obj->m_pos.z += dz;
+      }
+   }
+}
+
+void City::MoveObjects(double dz)
+{
+   MoveObjects(m_balls,     dz);
+   MoveObjects(m_rightRow1, dz);
+   MoveObjects(m_rightRow2, dz);
+   MoveObjects(m_rightRow3, dz);
+   MoveObjects(m_leftRow1,  dz);
+   MoveObjects(m_leftRow2,  dz);
+   MoveObjects(m_leftRow3,  dz);
+}
 
 //////////////////////////////////////////////////////////////////////////
+BitmapObject::BitmapObject(BitmapObject & other)
+: WorldObject(other)
+, m_bitmap(other.m_bitmap)
+{
+
+}
+
 BitmapObject::BitmapObject(CBitmapObject & m_bitmap)
 : m_bitmap(m_bitmap)
 {
@@ -536,7 +612,9 @@ void Road::Draw(CDC3D & dc, RECT* prc)
    double roadRightBorder = prc->right - laneWidth;
 
    //Draw asphalt
+#if 1
    {
+      //TODO: Fix artifacts, lines drawn from left-upper corner
       COLORREF colAsphalt = RGB(0x28, 0x2B, 0x2A); //Asphalt
       CBrush brushRoad; brushRoad.CreateSolidBrush(colAsphalt);
 
@@ -561,6 +639,7 @@ void Road::Draw(CDC3D & dc, RECT* prc)
       dc.SelectObject(oldPen);
       dc.SelectObject(oldBrush);
    }
+#endif
 
    //Draw central line
    {
@@ -712,6 +791,11 @@ Ball::Ball() : BitmapObject(BitmapHolder::Instance().m_ballBitmap)
 
 }
 
+Ball::Ball(Ball & other) : BitmapObject(other)
+{
+
+}
+
 void Ball::GenerateBall(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth)
 {
    double h = GetSize().h;
@@ -719,4 +803,9 @@ void Ball::GenerateBall(int cellXPos, int cellZPos, double groundHeight, double 
    double xShift = RangedRand(0, cellWidth - w);
    double dShift = RangedRand(0, cellDepth - 1);
    SetPos(cellXPos + xShift, groundHeight - h, cellZPos + dShift);
+}
+
+WorldObject * Ball::Clone()
+{
+   return new Ball(*this);
 }

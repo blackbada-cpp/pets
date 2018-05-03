@@ -22,9 +22,11 @@ public:
 
 public:
    House();
+   House(House & other);
    House(POINT3D &pos, SIZE3D &size);
    House(int x, int y, int z, int w, int h, int d);
    ~House();
+   virtual WorldObject * Clone();
    
    void GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth);
    void SetColor(COLORREF frontCol, COLORREF sideCol);

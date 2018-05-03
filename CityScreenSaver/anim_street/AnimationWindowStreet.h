@@ -8,10 +8,12 @@
 #include <vector>
 
 
+//Camera settings
 #define CAMERA_SPEED (4.0)
 #define CAMERA_SPEED_MAX (500.0)
 #define CAMERA_SPEED_MIN (0.0)
 #define CAMERA_SPEED_INCREASE (4.0)
+#define Z_CAMERA_INIT (0.0)
 
 //In houses
 #define DETAILIZATION_MEDIUM (25)
@@ -61,30 +63,41 @@
 #define COLOR_WINDOW_3 RGB(175, 192, 98)
 #define COLOR_WINDOW_4 RGB(85, 147, 48)
 #define COLOR_WINDOW_5 RGB(2, 119, 98)
+
+
+#define MOVE_CAMERA
+
 class CDC3D;
 
 
+//////////////////////////////////////////////////////////////////////////
 class BitmapObject : public WorldObject
 {
 private:
    CBitmapObject & m_bitmap;
 
 public:
+   BitmapObject(BitmapObject & other);
    BitmapObject(CBitmapObject & m_bitmap);
    virtual void DoDraw(CDC3D & dc);
 };
 
+//////////////////////////////////////////////////////////////////////////
 class Ball : public BitmapObject
 {
 public:
    Ball();
+   Ball(Ball & other);
+   virtual WorldObject * Clone();
    void GenerateBall(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth);
 };
 
+//////////////////////////////////////////////////////////////////////////
 class  City
 {
 public:
-   int m_houseCount;
+   int    m_cellCount;
+   double m_cellDepth;
 
    std::vector<WorldObject*> m_leftRow1;
    std::vector<WorldObject*> m_leftRow2;
@@ -97,21 +110,34 @@ public:
    std::vector<WorldObject*> m_balls;
 
 public:
-   City(int houseCount);
+   City();
    ~City();
 
-   void Init(CRect & rc, double z_houseStep, double groundHeight);
-   void Draw(CDC3D & dc);
+   double GetCityDepth() const { return m_cellCount *m_cellDepth; }
+   void CopyFrom(City &other);
+   void Init(CRect & rc, int cellCount, double cellDepth, double groundHeight);
+   void PrepareDraw(World & world);
+   
+#ifndef MOVE_CAMERA
+   //Move city with camera flip
    void MoveObjects(std::vector<WorldObject*> &row, double dz, double z_houseStep, double z_camera);
    void MoveObjects(double dz, double z_houseStep, double z_camera);
+#endif
+
+   //Move city
+   void MoveObjects(std::vector<WorldObject*> &row, double dz);
+   void MoveObjects(double dz);
 
 protected:
+   void CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom);
    void CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent);
    void DestroyRow(std::vector<WorldObject*> &row);
    void InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth);
 
 };
 
+//////////////////////////////////////////////////////////////////////////
+//TODO: class Road : public WorldObject
 class Road
 {
 public:
@@ -132,7 +158,9 @@ public:
    void MoveForward(RECT * prc, double dz, double z_camera);
 };
 
-// CAnimationWindow dialog
+
+//////////////////////////////////////////////////////////////////////////
+// Main window
 class CAnimationWindowStreet : public CWnd
 {
 // Construction
@@ -151,13 +179,14 @@ protected:
    double m_cyPercent;
 
    double m_cameraSpeed;
+#ifdef MOVE_CAMERA
+   double m_z_camera_limit;
+#endif
    const double m_z_houseStep      = 800.0; //Step between front wall of 2 houses 
-   //const double m_tonnelDepthEnd   = 18000.0;
-   //const double m_tonnelDepthEnd = 8000.0;
-   //const double m_tonnelDepthEnd = 800.0;
 
    //World m_world;
    City m_city;
+   City m_city2;
    Road m_road;
 
    enum KeyPressed

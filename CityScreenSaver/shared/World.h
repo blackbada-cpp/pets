@@ -22,8 +22,10 @@ public:
 
 public:
    WorldObject();
+   WorldObject(WorldObject & other);
    WorldObject(POINT3D &pos, SIZE3D &size);
    WorldObject(int x, int y, int z, int w, int h, int d);
+   virtual WorldObject * Clone() = 0;
 
    void SetPos(POINT3D &pos) { m_pos = pos; };
    void SetPos(int x, int y, int z) { m_pos.x = x; m_pos.y = y; m_pos.z = z; }

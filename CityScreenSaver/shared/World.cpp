@@ -6,6 +6,13 @@ WorldObject::WorldObject()
 
 }
 
+WorldObject::WorldObject(WorldObject & other)
+: m_pos(other.m_pos)
+, m_size(other.m_size)
+{
+
+}
+
 WorldObject::WorldObject(POINT3D &pos, SIZE3D &size)
 : m_pos(pos)
 , m_size(size)

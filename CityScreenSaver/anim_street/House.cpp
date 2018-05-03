@@ -41,6 +41,17 @@ House::House(int x, int y, int z, int w, int h, int d)
    m_windowWidth = 10;
 }
 
+House::House(House & other)
+: WorldObject(other)
+, m_frontCol    (other.m_frontCol    )
+, m_sideCol     (other.m_sideCol     )
+, m_windowCol   (other.m_windowCol   )
+, m_roofCol     (other.m_roofCol     )
+, m_windowHeight(other.m_windowHeight)
+, m_windowWidth (other.m_windowWidth )
+{
+}
+
 
 House::~House()
 {
@@ -330,5 +341,10 @@ void House::GenerateHouse(int cellXPos, int cellZPos, double groundHeight, doubl
    COLORREF frontCol, sideCol;
    House::GenerateColor(frontCol, sideCol);
    SetColor(frontCol, sideCol);
+}
+
+WorldObject * House::Clone()
+{
+   return new House(*this);
 }
 
