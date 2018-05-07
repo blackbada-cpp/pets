@@ -7,6 +7,7 @@
 #include "House.h"
 #include <vector>
 
+#define CELL_DEPTH (800.0)
 
 //Camera settings
 #define CAMERA_SPEED (4.0)
@@ -35,6 +36,17 @@
 
 #define D_PERCENT   (2.0)
 
+//http://www.rapidtables.com/web/color/RGB_Color.htm
+#define FRONT_COLOR_1 RGB(255, 165, 0),  //orange
+#define FRONT_COLOR_1 RGB(255, 235, 205),//
+#define FRONT_COLOR_1 RGB(107, 142, 35), //olive drab
+#define FRONT_COLOR_1 RGB(64, 224, 208), //turquoise
+
+#define SIDE_COLOR_1 RGB(255, 140, 0),  //dark orange
+#define SIDE_COLOR_1 RGB(245, 222, 179),//
+#define SIDE_COLOR_1 RGB(85, 107, 47),  //dark olive green
+#define SIDE_COLOR_1 RGB(0, 206, 209),  //dark turquoise
+
 //http://www.colourlovers.com/palette/264688/Grass_Green
 #define COLOR_GRASSS_MEADOW         RGB(0,92,9)
 #define COLOR_GRASSS_RIVER_BANK     RGB(0, 104, 10)
@@ -56,6 +68,20 @@
 #define COLOR_CITY_SUNSET_SIDE_3 RGB(255, 95, 45)
 #define COLOR_CITY_SUNSET_SIDE_4 RGB(235, 61, 62)
 #define COLOR_CITY_SUNSET_SIDE_5 RGB(196, 35, 68)
+
+//http://www.colourlovers.com/palette/1156217/THE_CITY_AT_MIDDAY
+#define COLOR_CITY_MIDDAY_1 RGB(243,238,209)
+#define COLOR_CITY_MIDDAY_2 RGB(52,94,107)
+#define COLOR_CITY_MIDDAY_3 RGB(117,120,131)
+#define COLOR_CITY_MIDDAY_4 RGB(211,180,56)
+#define COLOR_CITY_MIDDAY_5 RGB(205,93,93)
+
+#define COLOR_CITY_MIDDAY_SIDE_1 RGB(243-5,238-5,209-5)
+#define COLOR_CITY_MIDDAY_SIDE_2 RGB(52-5, 94-5, 107-5)
+#define COLOR_CITY_MIDDAY_SIDE_3 RGB(117-5,120-5,131-5)
+#define COLOR_CITY_MIDDAY_SIDE_4 RGB(211-5,180-5,56-5)
+#define COLOR_CITY_MIDDAY_SIDE_5 RGB(205-5,93-5, 93-5)
+
 
 //http://www.colourlovers.com/palette/758733/Art_Glass_Screen
 #define COLOR_WINDOW_1 RGB(254, 252, 174)
@@ -96,6 +122,7 @@ public:
 class  City
 {
 public:
+   POINT3D m_pos;
    int    m_cellCount;
    double m_cellDepth;
 
@@ -108,6 +135,8 @@ public:
    //int m_houseCount;
 
    std::vector<WorldObject*> m_balls;
+   std::vector<COLORREF> * m_frontColors;
+   std::vector<COLORREF> * m_sideColors;
 
 public:
    City();
@@ -115,8 +144,8 @@ public:
 
    double GetCityDepth() const { return m_cellCount *m_cellDepth; }
    void CopyFrom(City &other);
-   void Init(CRect & rc, int cellCount, double cellDepth, double groundHeight);
-   void PrepareDraw(World & world);
+   void Init(CRect & rc, double z, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
+   void PrepareDraw(World & world, double cameraZPos, double cameraCutOff);
    
 #ifndef MOVE_CAMERA
    //Move city with camera flip
@@ -125,14 +154,14 @@ public:
 #endif
 
    //Move city
-   void MoveObjects(std::vector<WorldObject*> &row, double dz);
    void MoveObjects(double dz);
 
 protected:
+   void MoveObjects(std::vector<WorldObject*> &row, double dz);
    void CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom);
    void CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent);
    void DestroyRow(std::vector<WorldObject*> &row);
-   void InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth);
+   void InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber);
 
 };
 
@@ -180,13 +209,14 @@ protected:
 
    double m_cameraSpeed;
 #ifdef MOVE_CAMERA
-   double m_z_camera_limit;
+   double m_worldWrapDepth;
 #endif
-   const double m_z_houseStep      = 800.0; //Step between front wall of 2 houses 
+   const double m_cellDepth      = CELL_DEPTH; //Step between front wall of 2 houses 
 
    //World m_world;
-   City m_city;
+   City m_city1;
    City m_city2;
+   City m_city1copy;
    Road m_road;
 
    enum KeyPressed

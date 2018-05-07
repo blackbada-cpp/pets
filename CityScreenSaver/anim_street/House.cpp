@@ -288,59 +288,33 @@ void House::SetColor(COLORREF frontCol, COLORREF sideCol)
    m_frontCol = frontCol; m_sideCol = sideCol;
 }
 
-//http://www.rapidtables.com/web/color/RGB_Color.htm
-#define FRONT_COLOR_1 RGB(255, 165, 0),  //orange
-#define FRONT_COLOR_1 RGB(255, 235, 205),//
-#define FRONT_COLOR_1 RGB(107, 142, 35), //olive drab
-#define FRONT_COLOR_1 RGB(64, 224, 208), //turquoise
 
-#define SIDE_COLOR_1 RGB(255, 140, 0),  //dark orange
-#define SIDE_COLOR_1 RGB(245, 222, 179),//
-#define SIDE_COLOR_1 RGB(85, 107, 47),  //dark olive green
-#define SIDE_COLOR_1 RGB(0, 206, 209),  //dark turquoise
 
-#define COLORS_MAX (5)
-static COLORREF st_frontColors[COLORS_MAX] =
+void House::GenerateColor(std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
 {
-   COLOR_CITY_SUNSET_1,
-   COLOR_CITY_SUNSET_2,
-   COLOR_CITY_SUNSET_3,
-   COLOR_CITY_SUNSET_4,
-   COLOR_CITY_SUNSET_5
-};
-
-static COLORREF st_sideColors[COLORS_MAX] =
-{
-   COLOR_CITY_SUNSET_SIDE_1,
-   COLOR_CITY_SUNSET_SIDE_2,
-   COLOR_CITY_SUNSET_SIDE_3,
-   COLOR_CITY_SUNSET_SIDE_4,
-   COLOR_CITY_SUNSET_SIDE_5
-};
-
-void House::GenerateColor(COLORREF & frontCol, COLORREF & sideCol)
-{
-   int i = RangedRandInt(0, COLORS_MAX-1);
-   frontCol = st_frontColors[i];
-   sideCol = st_sideColors[i];
+   assert(frontColors.size() == sideColors.size());
+   
+   int i = RangedRandInt(0, frontColors.size() - 1);
+   COLORREF  frontCol = frontColors[i];
+   COLORREF  sideCol = sideColors[i];
+   SetColor(frontCol, sideCol);
 }
 
-void House::GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth)
+void House::GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
 {
    //double h = RangedRand(houseHeight / 2, houseHeight * 2);
    //double h = RangedRandInt(1, MAX_FLOOR_NUMBER)*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT;
-   double h = RangedRand(WINDOW_HEIGHT * 3, MAX_HOUSE_HEIGHT);
+   double h = RangedRand(WINDOW_HEIGHT * 3, maxFloorNumber*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT);
    double w = RangedRand(MAX_HOUSE_WIDTH / 4, MAX_HOUSE_WIDTH);
-   double d = RangedRand(cellDepth / 4, cellDepth);
-   double xShift = RangedRand(0, cellWidth-w);
-   SetPos(cellXPos + xShift, groundHeight - h, cellZPos);
+   double d = RangedRand(MAX_HOUSE_WIDTH / 4, MAX_HOUSE_WIDTH);
+   double xShift = RangedRand(0, cellWidth - w);
+   double zShift = RangedRand(0, cellDepth - d);
+   SetPos(cellXPos + xShift, groundHeight - h, cellZPos + zShift);
    SetSize(w, h, d);
    m_windowHeight = WINDOW_HEIGHT;
    m_windowWidth = WINDOW_WIDTH;
 
-   COLORREF frontCol, sideCol;
-   House::GenerateColor(frontCol, sideCol);
-   SetColor(frontCol, sideCol);
+   GenerateColor(frontColors, sideColors);
 }
 
 WorldObject * House::Clone()

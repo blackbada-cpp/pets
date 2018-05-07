@@ -60,8 +60,8 @@ END_MESSAGE_MAP()
 
 
 CAnimationWindowStreet::CAnimationWindowStreet(CWnd* pParent /*=NULL*/)
-: m_city()
-, m_road(HOUSE_COUNT * m_z_houseStep, m_z_houseStep)
+: m_city1()
+, m_road(HOUSE_COUNT * m_cellDepth, m_cellDepth)
 , m_pressed(key_Nothing)
 , m_cxPercent(X_INIT_PERCENT)
 , m_cyPercent(Y_INIT_PERCENT)
@@ -130,7 +130,7 @@ void CAnimationWindowStreet::OnPaint()
       //CDC3D mdc(&rc, 0 /*m_z_camera*/, m_planeWidth, m_planeHeight, m_cxPercent, m_cyPercent);
       //Moving camera
       CDC3D mdc(&rc, m_z_camera, m_planeWidth, m_planeHeight, m_cxPercent, m_cyPercent);
-      mdc.InitDetailization(m_z_houseStep * DETAILIZATION_MEDIUM, m_z_houseStep * DETAILIZATION_LOW);
+      mdc.InitDetailization(m_cellDepth * DETAILIZATION_MEDIUM, m_cellDepth * DETAILIZATION_LOW);
       mdc.CreateCompatibleDC(&dc);
       CBitmap* oldBitmap = mdc.SelectObject(&bmp);
 
@@ -143,6 +143,45 @@ void CAnimationWindowStreet::OnPaint()
       mdc.SelectObject(oldBitmap);
    }
 }
+
+#define COLORS_MAX (5)
+static COLORREF st_frontColorsSunSet[COLORS_MAX] =
+{
+   COLOR_CITY_SUNSET_1,
+   COLOR_CITY_SUNSET_2,
+   COLOR_CITY_SUNSET_3,
+   COLOR_CITY_SUNSET_4,
+   COLOR_CITY_SUNSET_5
+};
+
+static COLORREF st_sideColorsSunSet[COLORS_MAX] =
+{
+   COLOR_CITY_SUNSET_SIDE_1,
+   COLOR_CITY_SUNSET_SIDE_2,
+   COLOR_CITY_SUNSET_SIDE_3,
+   COLOR_CITY_SUNSET_SIDE_4,
+   COLOR_CITY_SUNSET_SIDE_5
+};
+
+
+static COLORREF st_frontColorsMidDay[COLORS_MAX] =
+{
+   COLOR_CITY_MIDDAY_1,
+   COLOR_CITY_MIDDAY_2,
+   COLOR_CITY_MIDDAY_3,
+   COLOR_CITY_MIDDAY_4,
+   COLOR_CITY_MIDDAY_5
+};
+
+static COLORREF st_sideColorsMidDay[COLORS_MAX] =
+{
+   COLOR_CITY_MIDDAY_SIDE_1,
+   COLOR_CITY_MIDDAY_SIDE_2,
+   COLOR_CITY_MIDDAY_SIDE_3,
+   COLOR_CITY_MIDDAY_SIDE_4,
+   COLOR_CITY_MIDDAY_SIDE_5
+};
+
 
 int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
 {
@@ -159,15 +198,24 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_planeHeight = rc.Height();
 
 
-#ifdef MOVE_CAMERA
-   m_z_camera_limit = m_z_houseStep*HOUSE_COUNT;
-#endif
-   m_city.Init(rc, HOUSE_COUNT, m_z_houseStep, ::GetGroundHeight(&rc));
+
+   std::vector<COLORREF>  frontColors1, sideColors1, frontColors2, sideColors2;
+   frontColors1.assign(&st_frontColorsSunSet[0], &st_frontColorsSunSet[COLORS_MAX - 1]);
+   sideColors1. assign(&st_sideColorsSunSet[0],  &st_sideColorsSunSet [COLORS_MAX - 1]);
+   frontColors2.assign(&st_frontColorsMidDay[0], &st_frontColorsMidDay[COLORS_MAX - 1]);
+   sideColors2. assign(&st_sideColorsMidDay[0],  &st_sideColorsMidDay [COLORS_MAX - 1]);
+   m_city1.Init(rc, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, frontColors1, sideColors1);
+   double depth1 = m_city1.GetCityDepth();
+   m_city2.Init(rc, depth1, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 14, frontColors2, sideColors2);
    //Duplicate city
-   m_city2.CopyFrom(m_city);
-   m_city2.MoveObjects(m_city.GetCityDepth());
+   m_city1copy.CopyFrom(m_city1);
+   m_city1copy.MoveObjects(m_city1.GetCityDepth() + m_city2.GetCityDepth());
    
    m_road.Init(rc);
+
+#ifdef MOVE_CAMERA
+   m_worldWrapDepth = m_city1.GetCityDepth() + m_city2.GetCityDepth();
+#endif
 
    return CWnd::OnCreate(cs);
 }
@@ -219,7 +267,7 @@ void CAnimationWindowStreet::OnTimer(UINT_PTR)
 
 #ifdef MOVE_CAMERA
    m_z_camera = m_z_camera + m_cameraSpeed;
-   if (m_z_camera > m_z_camera_limit)
+   if (m_z_camera > m_worldWrapDepth)
       m_z_camera = Z_CAMERA_INIT;
 #endif
    //Move camera forever:
@@ -231,7 +279,7 @@ void CAnimationWindowStreet::OnTimer(UINT_PTR)
 
 #ifndef MOVE_CAMERA
    //Move objects instead of camera
-   m_city.MoveObjects(m_cameraSpeed, m_z_houseStep, m_z_camera);
+   m_city1.MoveObjects(m_cameraSpeed, m_cellDepth, m_z_camera);
    m_road.MoveForward(&rcClient, m_cameraSpeed, m_z_camera);
 #endif
    Invalidate();
@@ -260,9 +308,12 @@ void CAnimationWindowStreet::DrawStreet(CDC3D & dc, RECT* prc)
    m_road.Draw(dc, prc);
 
    //Draw 3D Objects
+   //todo: Use m_z_camera to optimize
    World world;
-   m_city2.PrepareDraw(world);
-   m_city.PrepareDraw(world);
+   double cutOff =  m_city1.GetCityDepth();
+   m_city1.PrepareDraw(world, m_z_camera, cutOff);
+   m_city2.PrepareDraw(world, m_z_camera, cutOff);
+   m_city1copy.PrepareDraw(world, m_z_camera, cutOff);
 
    world.DoDraw(dc);
 
@@ -300,6 +351,8 @@ void CAnimationWindowStreet::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 City::City()
 : m_cellCount(0)
 , m_cellDepth(0.0)
+, m_frontColors(NULL)
+, m_sideColors(NULL)
 {
    srand((unsigned)time(NULL));
 }
@@ -317,8 +370,11 @@ City::~City()
 
 void City::CopyFrom(City &other)
 {
-   m_cellCount = other.m_cellCount;
-   m_cellDepth = other.m_cellDepth;
+   m_cellCount   = other.m_cellCount;
+   m_cellDepth   = other.m_cellDepth;
+   m_frontColors = other.m_frontColors;
+   m_sideColors  = other.m_sideColors;
+   m_pos         = other.m_pos;
 
    CopyRow(m_balls    , other.m_balls    );
    CopyRow(m_leftRow1 , other.m_leftRow1 );
@@ -353,10 +409,13 @@ int RangedRandInt(int range_min, int range_max)
    return (int)RangedRand(range_min, range_max);
 }
 
-void City::Init(CRect & rc, int cellCount, double cellDepth, double groundHeight)
+void City::Init(CRect & rc, double z, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
 {
+   m_pos.z = z;
    m_cellCount = cellCount;
    m_cellDepth = cellDepth;
+   m_frontColors = &frontColors;
+   m_sideColors = &sideColors;
 
    //////////////////////////////////////////////////////////////////////////
    House::MAX_HOUSE_HEIGHT = House::GetMaxHouseHeight(&rc);
@@ -401,12 +460,12 @@ void City::Init(CRect & rc, int cellCount, double cellDepth, double groundHeight
    //////////////////////////////////////////////////////////////////////////
    //Init houses
    double widthLimit = rc.right;
-   InitCellRow(m_rightRow1, rc.right                             , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
-   InitCellRow(m_rightRow2, rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
-   InitCellRow(m_rightRow3, rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
-   InitCellRow(m_leftRow1,  0 - 2 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
-   InitCellRow(m_leftRow2,  0 - 4 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
-   InitCellRow(m_leftRow3,  0 - 6 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth);
+   InitCellRow(m_rightRow1, rc.right                             , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(m_rightRow2, rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(m_rightRow3, rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(m_leftRow1,  0 - 2 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(m_leftRow2,  0 - 4 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(m_leftRow3,  0 - 6 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
 }
 
 void City::CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom)
@@ -448,33 +507,37 @@ void City::CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int h
    }
 }
 
-void City::InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth)
+void City::InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber)
 {
-#define MAX_FLOOR_NUMBER (14)
-   int depth = 0;
+   double  cellZPos = m_pos.z;
    for (auto it = row.begin(); it != row.end(); ++it)
    {
       WorldObject* obj = *it;
       House * house = dynamic_cast<House*>(obj);
       if (house)
       {
-         house->GenerateHouse(cellXPos, depth, groundHeight, cellWidth, cellDepth);
+         house->GenerateHouse(cellXPos, cellZPos, groundHeight, cellWidth, cellDepth, maxFloorNumber, *m_frontColors, *m_sideColors);
       }
       else
       {
          Ball * ball = dynamic_cast<Ball*>(obj);
          if (ball)
          {
-            ball->GenerateBall(cellXPos, depth, groundHeight, cellWidth, cellDepth);
+            ball->GenerateBall(cellXPos, cellZPos, groundHeight, cellWidth, cellDepth);
          }
       }
-      depth += cellDepth;
+      cellZPos += cellDepth;
    }
 }
 
 
-void City::PrepareDraw(World & world)
+void City::PrepareDraw(World & world, double cameraZPos, double cameraCutOff)
 {
+   if (m_pos.z > cameraZPos + cameraCutOff)
+      return; //city is too far away
+   if (m_pos.z + GetCityDepth() < cameraZPos)
+      return; //city is behind
+
    int i;
    for (i = m_leftRow1.size() - 1; i >= 0; i--)
    {
@@ -539,6 +602,7 @@ void City::MoveObjects(std::vector<WorldObject*> &row, double dz)
 
 void City::MoveObjects(double dz)
 {
+   m_pos.z += dz;
    MoveObjects(m_balls,     dz);
    MoveObjects(m_rightRow1, dz);
    MoveObjects(m_rightRow2, dz);

@@ -3,6 +3,7 @@
 
 #pragma once
 #include "World.h"
+#include <vector>
 
 
 class House : public WorldObject
@@ -28,7 +29,7 @@ public:
    ~House();
    virtual WorldObject * Clone();
    
-   void GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth);
+   void GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
    void SetColor(COLORREF frontCol, COLORREF sideCol);
    virtual void DoDraw(CDC3D & dc);
 
@@ -36,8 +37,8 @@ public:
    static LONG GetMaxHouseHeight(RECT* prc);
    static LONG GetWindowWidth(RECT* prc);
    static LONG GetWindowHeight(RECT* prc);
-   static void GenerateColor(COLORREF & frontCol, COLORREF & sideCol);
-   
+   void GenerateColor(std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
+
    void DrawRoof(CDC3D & dc, COLORREF frontCol, int x, int z, int width, int depth);
    void DrawFrontWallRect(CDC3D & dc, COLORREF frontCol, int x, int y, int width, int height);
    void DrawLeftWallRect(CDC3D & dc, COLORREF frontCol, int z, int y, int width, int height);
