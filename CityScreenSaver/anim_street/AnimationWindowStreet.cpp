@@ -60,13 +60,13 @@ END_MESSAGE_MAP()
 
 
 CAnimationWindowStreet::CAnimationWindowStreet(CWnd* pParent /*=NULL*/)
-: m_city1()
-, m_road(HOUSE_COUNT * m_cellDepth, m_cellDepth)
+: m_road(HOUSE_COUNT * m_cellDepth, m_cellDepth)
 , m_pressed(key_Nothing)
 , m_cxPercent(X_INIT_PERCENT)
 , m_cyPercent(Y_INIT_PERCENT)
 , m_cameraSpeed(CAMERA_SPEED)
 , m_z_camera(Z_CAMERA_INIT)
+, m_z_cameraCutOff(Z_CAMERA_CUTOFF)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
    m_planeWidth = 100.0;
@@ -198,23 +198,36 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_planeHeight = rc.Height();
 
 
+   std::vector<COLORREF>  frontColors1(&st_frontColorsSunSet[0], &st_frontColorsSunSet[COLORS_MAX - 1]);
+   std::vector<COLORREF>  sideColors1 (&st_sideColorsSunSet[0],  &st_sideColorsSunSet [COLORS_MAX - 1]);
+   std::vector<COLORREF>  frontColors2(&st_frontColorsMidDay[0], &st_frontColorsMidDay[COLORS_MAX - 1]);
+   std::vector<COLORREF>  sideColors2 (&st_sideColorsMidDay[0],  &st_sideColorsMidDay [COLORS_MAX - 1]);
 
-   std::vector<COLORREF>  frontColors1, sideColors1, frontColors2, sideColors2;
-   frontColors1.assign(&st_frontColorsSunSet[0], &st_frontColorsSunSet[COLORS_MAX - 1]);
-   sideColors1. assign(&st_sideColorsSunSet[0],  &st_sideColorsSunSet [COLORS_MAX - 1]);
-   frontColors2.assign(&st_frontColorsMidDay[0], &st_frontColorsMidDay[COLORS_MAX - 1]);
-   sideColors2. assign(&st_sideColorsMidDay[0],  &st_sideColorsMidDay [COLORS_MAX - 1]);
-   m_city1.Init(rc, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, frontColors1, sideColors1);
-   double depth1 = m_city1.GetCityDepth();
-   m_city2.Init(rc, depth1, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 14, frontColors2, sideColors2);
-   //Duplicate city
-   m_city1copy.CopyFrom(m_city1);
-   m_city1copy.MoveObjects(m_city1.GetCityDepth() + m_city2.GetCityDepth());
+   //dp City m_city1;
+   //dp City m_city2;
+   //dp City m_city1copy;
+
+   m_regions.push_back(new City);
+   m_regions.push_back(new City);
+   m_regions.push_back(new City);
+   m_regions[0]->Init(rc, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, frontColors1, sideColors1);
+   double depth1 = m_regions[0]->GetCityDepth();
+   m_regions[1]->Init(rc, depth1, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 14, frontColors2, sideColors2);
+
+   //Duplicate 1st city
+   double totalDepth = 0.0;
+   for (auto it = m_regions.begin(); it != m_regions.end(); ++it)
+   {
+      City * city = *it;
+      totalDepth += city->GetCityDepth();
+   }
+   m_regions[2]->CopyFrom(*m_regions[0]);
+   m_regions[2]->MoveObjects(totalDepth);
    
    m_road.Init(rc);
 
 #ifdef MOVE_CAMERA
-   m_worldWrapDepth = m_city1.GetCityDepth() + m_city2.GetCityDepth();
+   m_worldWrapDepth = totalDepth;
 #endif
 
    return CWnd::OnCreate(cs);
@@ -223,6 +236,15 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
 
 void CAnimationWindowStreet::OnDestroy()
 {
+   for (auto it = m_regions.begin(); it != m_regions.end(); ++it)
+   {
+      City * region = *it;
+      delete region;
+   }
+   m_regions.clear();
+
+
+
    KillTimer(ID_TIMER);
 
    //World::reverse_iterator it;
@@ -308,12 +330,12 @@ void CAnimationWindowStreet::DrawStreet(CDC3D & dc, RECT* prc)
    m_road.Draw(dc, prc);
 
    //Draw 3D Objects
-   //todo: Use m_z_camera to optimize
    World world;
-   double cutOff =  m_city1.GetCityDepth();
-   m_city1.PrepareDraw(world, m_z_camera, cutOff);
-   m_city2.PrepareDraw(world, m_z_camera, cutOff);
-   m_city1copy.PrepareDraw(world, m_z_camera, cutOff);
+   for (auto it = m_regions.begin(); it != m_regions.end(); ++it)
+   {
+      City * region = *it;
+      region->PrepareDraw(world, m_z_camera, m_z_cameraCutOff);
+   }
 
    world.DoDraw(dc);
 

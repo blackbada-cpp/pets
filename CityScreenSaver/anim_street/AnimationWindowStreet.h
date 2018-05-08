@@ -8,6 +8,8 @@
 #include <vector>
 
 #define CELL_DEPTH (800.0)
+#define HOUSE_COUNT (100)
+#define BALL_COUNT (40)
 
 //Camera settings
 #define CAMERA_SPEED (4.0)
@@ -15,13 +17,12 @@
 #define CAMERA_SPEED_MIN (0.0)
 #define CAMERA_SPEED_INCREASE (4.0)
 #define Z_CAMERA_INIT (0.0)
+#define Z_CAMERA_CUTOFF (CELL_DEPTH*HOUSE_COUNT)
 
 //In houses
 #define DETAILIZATION_MEDIUM (25)
 #define DETAILIZATION_LOW    (50)
 
-#define HOUSE_COUNT (100)
-#define BALL_COUNT (40)
 
 #define X_MIN_PERCENT (-50.0)
 #define X_INIT_PERCENT (0.0)
@@ -202,6 +203,7 @@ public:
 protected:
 	HICON m_hIcon;
    double m_z_camera;
+   double m_z_cameraCutOff;
    double m_planeWidth;
    double m_planeHeight;
    double m_cxPercent;
@@ -213,10 +215,7 @@ protected:
 #endif
    const double m_cellDepth      = CELL_DEPTH; //Step between front wall of 2 houses 
 
-   //World m_world;
-   City m_city1;
-   City m_city2;
-   City m_city1copy;
+   std::vector<City*> m_regions;
    Road m_road;
 
    enum KeyPressed
