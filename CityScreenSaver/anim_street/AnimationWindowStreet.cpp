@@ -57,6 +57,65 @@ END_MESSAGE_MAP()
 //////////////////////////////////////////////////////////////////////////
 // CAnimationWindowStreet dialog
 
+#define COLORS_MAX (5)
+
+//http://www.colourlovers.com/palette/896737/City_Sunset
+static COLORREF st_frontSunSet[COLORS_MAX] =
+{
+   RGB(255, 171, 3),
+   RGB(252, 127, 3),
+   RGB(252, 57, 3),
+   RGB(209, 2, 78),
+   RGB(166, 2, 108)
+};
+
+//http://www.colourlovers.com/palette/1256070/Sunset_slowly
+static COLORREF st_sideSunSet[COLORS_MAX] =
+{
+   RGB(245, 159, 50),
+   RGB(252, 143, 40),
+   RGB(255, 95, 45) ,
+   RGB(235, 61, 62) ,
+   RGB(196, 35, 68)
+};
+
+//http://www.colourlovers.com/palette/1156217/THE_CITY_AT_MIDDAY
+static COLORREF st_frontMidDay[COLORS_MAX] =
+{
+   RGB(243, 238, 209),
+   RGB(52, 94, 107),
+   RGB(117, 120, 131),
+   RGB(211, 180, 56),
+   RGB(205, 93, 93)
+};
+
+static COLORREF st_sideMidDay[COLORS_MAX] =
+{
+   RGB(243 - 5, 238 - 5, 209 - 5),
+   RGB(52 - 5, 94 - 5, 107 - 5),
+   RGB(117 - 5, 120 - 5, 131 - 5),
+   RGB(211 - 5, 180 - 5, 56 - 5),
+   RGB(205 - 5, 93 - 5, 93 - 5)
+};
+
+//http://www.colourlovers.com/palette/135462/quiet_village
+static COLORREF st_frontVillage[COLORS_MAX] =
+{
+   RGB(232, 235, 205),
+   RGB(169, 181, 165),
+   RGB(173, 43, 65),
+   RGB(250, 181, 164),
+   RGB(243, 234, 216)
+};
+
+static COLORREF st_sideVillage[COLORS_MAX] =
+{
+   RGB(232 - 5, 235 - 5, 205 - 5),
+   RGB(169 - 5, 181 - 5, 165 - 5),
+   RGB(173 - 5, 43 - 5, 65 - 5),
+   RGB(250 - 5, 181 - 5, 164 - 5),
+   RGB(243 - 5, 234 - 5, 216 - 5)
+};
 
 
 CAnimationWindowStreet::CAnimationWindowStreet(CWnd* pParent /*=NULL*/)
@@ -67,6 +126,12 @@ CAnimationWindowStreet::CAnimationWindowStreet(CWnd* pParent /*=NULL*/)
 , m_cameraSpeed(CAMERA_SPEED)
 , m_z_camera(Z_CAMERA_INIT)
 , m_z_cameraCutOff(Z_CAMERA_CUTOFF)
+, m_front1(&st_frontSunSet[0], &st_frontSunSet[COLORS_MAX - 1])
+, m_side1 (&st_sideSunSet[0], &st_sideSunSet[COLORS_MAX - 1])
+, m_front2(&st_frontMidDay[0], &st_frontMidDay[COLORS_MAX - 1])
+, m_side2 (&st_sideMidDay[0], &st_sideMidDay[COLORS_MAX - 1])
+, m_front3(&st_frontVillage[0], &st_frontVillage[COLORS_MAX - 1])
+, m_side3 (&st_sideVillage[0], &st_sideVillage[COLORS_MAX - 1])
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
    m_planeWidth = 100.0;
@@ -144,45 +209,6 @@ void CAnimationWindowStreet::OnPaint()
    }
 }
 
-#define COLORS_MAX (5)
-static COLORREF st_frontColorsSunSet[COLORS_MAX] =
-{
-   COLOR_CITY_SUNSET_1,
-   COLOR_CITY_SUNSET_2,
-   COLOR_CITY_SUNSET_3,
-   COLOR_CITY_SUNSET_4,
-   COLOR_CITY_SUNSET_5
-};
-
-static COLORREF st_sideColorsSunSet[COLORS_MAX] =
-{
-   COLOR_CITY_SUNSET_SIDE_1,
-   COLOR_CITY_SUNSET_SIDE_2,
-   COLOR_CITY_SUNSET_SIDE_3,
-   COLOR_CITY_SUNSET_SIDE_4,
-   COLOR_CITY_SUNSET_SIDE_5
-};
-
-
-static COLORREF st_frontColorsMidDay[COLORS_MAX] =
-{
-   COLOR_CITY_MIDDAY_1,
-   COLOR_CITY_MIDDAY_2,
-   COLOR_CITY_MIDDAY_3,
-   COLOR_CITY_MIDDAY_4,
-   COLOR_CITY_MIDDAY_5
-};
-
-static COLORREF st_sideColorsMidDay[COLORS_MAX] =
-{
-   COLOR_CITY_MIDDAY_SIDE_1,
-   COLOR_CITY_MIDDAY_SIDE_2,
-   COLOR_CITY_MIDDAY_SIDE_3,
-   COLOR_CITY_MIDDAY_SIDE_4,
-   COLOR_CITY_MIDDAY_SIDE_5
-};
-
-
 int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
 {
    UINT ret;
@@ -198,11 +224,6 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_planeHeight = rc.Height();
 
 
-   std::vector<COLORREF>  frontColors1(&st_frontColorsSunSet[0], &st_frontColorsSunSet[COLORS_MAX - 1]);
-   std::vector<COLORREF>  sideColors1 (&st_sideColorsSunSet[0],  &st_sideColorsSunSet [COLORS_MAX - 1]);
-   std::vector<COLORREF>  frontColors2(&st_frontColorsMidDay[0], &st_frontColorsMidDay[COLORS_MAX - 1]);
-   std::vector<COLORREF>  sideColors2 (&st_sideColorsMidDay[0],  &st_sideColorsMidDay [COLORS_MAX - 1]);
-
    //dp City m_city1;
    //dp City m_city2;
    //dp City m_city1copy;
@@ -210,9 +231,10 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_regions.push_back(new City);
    m_regions.push_back(new City);
    m_regions.push_back(new City);
-   m_regions[0]->Init(rc, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, frontColors1, sideColors1);
-   double depth1 = m_regions[0]->GetCityDepth();
-   m_regions[1]->Init(rc, depth1, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 14, frontColors2, sideColors2);
+   m_regions.push_back(new City);
+   m_regions[0]->Init(rc, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, m_front1, m_side1);
+   m_regions[1]->Init(rc, CITY_DEPTH, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 14, m_front2, m_side2);
+   m_regions[2]->Init(rc, CITY_DEPTH*2., HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3);
 
    //Duplicate 1st city
    double totalDepth = 0.0;
@@ -221,8 +243,8 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
       City * city = *it;
       totalDepth += city->GetCityDepth();
    }
-   m_regions[2]->CopyFrom(*m_regions[0]);
-   m_regions[2]->MoveObjects(totalDepth);
+   m_regions[3]->CopyFrom(*m_regions[0]);
+   m_regions[3]->MoveObjects(totalDepth);
    
    m_road.Init(rc);
 
@@ -553,6 +575,18 @@ void City::InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double grou
 }
 
 
+void City::PrepareDraw(World & world, WorldObject*obj, double cameraZPos, double cameraCutOff)
+{
+   if (!obj)
+      return;
+   if (obj->m_pos.z > cameraZPos + cameraCutOff)
+      return; //object is too far away
+   if (obj->m_pos.z + obj->m_size.d < cameraZPos)
+      return; //object is behind
+
+   world.Add(obj);
+}
+
 void City::PrepareDraw(World & world, double cameraZPos, double cameraCutOff)
 {
    if (m_pos.z > cameraZPos + cameraCutOff)
@@ -561,19 +595,32 @@ void City::PrepareDraw(World & world, double cameraZPos, double cameraCutOff)
       return; //city is behind
 
    int i;
-   for (i = m_leftRow1.size() - 1; i >= 0; i--)
+   double cellZPos = m_pos.z;
+   for (i = 0; i < m_cellCount; i++)
    {
-      world.Add(m_leftRow1[i]);
-      world.Add(m_leftRow2[i]);
-      world.Add(m_leftRow3[i]);
-      world.Add(m_rightRow1[i]);
-      world.Add(m_rightRow2[i]);
-      world.Add(m_rightRow3[i]);
+      bool showCell = true;
+      //Draw all rows at-once per-cell
+      if (cellZPos > cameraZPos + cameraCutOff)
+         showCell = false; //row cells are too far away
+      if (cellZPos + m_cellDepth < cameraZPos)
+         showCell = false; //row cells are behind
+
+      if (showCell)
+      {
+         world.Add(m_leftRow1[i]);
+         world.Add(m_leftRow2[i]);
+         world.Add(m_leftRow3[i]);
+         world.Add(m_rightRow1[i]);
+         world.Add(m_rightRow2[i]);
+         world.Add(m_rightRow3[i]);
+      }
+      
+      cellZPos += m_cellDepth;
    }
 
    for (i = m_balls.size() - 1; i >= 0; i--)
    {
-      world.Add(m_balls[i]);
+      PrepareDraw(world, m_balls[i], cameraZPos, cameraCutOff);
    }
 }
 

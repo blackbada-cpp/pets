@@ -9,6 +9,7 @@
 
 #define CELL_DEPTH (800.0)
 #define HOUSE_COUNT (100)
+#define CITY_DEPTH (CELL_DEPTH*HOUSE_COUNT)
 #define BALL_COUNT (40)
 
 //Camera settings
@@ -17,6 +18,7 @@
 #define CAMERA_SPEED_MIN (0.0)
 #define CAMERA_SPEED_INCREASE (4.0)
 #define Z_CAMERA_INIT (0.0)
+//See only the depth of 1 city
 #define Z_CAMERA_CUTOFF (CELL_DEPTH*HOUSE_COUNT)
 
 //In houses
@@ -38,15 +40,15 @@
 #define D_PERCENT   (2.0)
 
 //http://www.rapidtables.com/web/color/RGB_Color.htm
-#define FRONT_COLOR_1 RGB(255, 165, 0),  //orange
-#define FRONT_COLOR_1 RGB(255, 235, 205),//
-#define FRONT_COLOR_1 RGB(107, 142, 35), //olive drab
-#define FRONT_COLOR_1 RGB(64, 224, 208), //turquoise
-
-#define SIDE_COLOR_1 RGB(255, 140, 0),  //dark orange
-#define SIDE_COLOR_1 RGB(245, 222, 179),//
-#define SIDE_COLOR_1 RGB(85, 107, 47),  //dark olive green
-#define SIDE_COLOR_1 RGB(0, 206, 209),  //dark turquoise
+//#define FRONT_COLOR_1 RGB(255, 165, 0),  //orange
+//#define FRONT_COLOR_1 RGB(255, 235, 205),//
+//#define FRONT_COLOR_1 RGB(107, 142, 35), //olive drab
+//#define FRONT_COLOR_1 RGB(64, 224, 208), //turquoise
+//
+//#define SIDE_COLOR_1 RGB(255, 140, 0),  //dark orange
+//#define SIDE_COLOR_1 RGB(245, 222, 179),//
+//#define SIDE_COLOR_1 RGB(85, 107, 47),  //dark olive green
+//#define SIDE_COLOR_1 RGB(0, 206, 209),  //dark turquoise
 
 //http://www.colourlovers.com/palette/264688/Grass_Green
 #define COLOR_GRASSS_MEADOW         RGB(0,92,9)
@@ -54,35 +56,6 @@
 #define COLOR_GRASSS_HILL           RGB(0,123,12)
 #define COLOR_GRASSS_FOOT_HILL      RGB(1,142,14)
 #define COLOR_GRASSS_BLADE_OF_GRASS RGB(1,166,17)
-
-
-//http://www.colourlovers.com/palette/896737/City_Sunset
-#define COLOR_CITY_SUNSET_1 RGB(255, 171, 3)
-#define COLOR_CITY_SUNSET_2 RGB(252, 127, 3)
-#define COLOR_CITY_SUNSET_3 RGB(252, 57, 3)
-#define COLOR_CITY_SUNSET_4 RGB(209, 2, 78)
-#define COLOR_CITY_SUNSET_5 RGB(166, 2, 108)
-
-//http://www.colourlovers.com/palette/1256070/Sunset_slowly
-#define COLOR_CITY_SUNSET_SIDE_1 RGB(245, 159, 50)
-#define COLOR_CITY_SUNSET_SIDE_2 RGB(252, 143, 40)
-#define COLOR_CITY_SUNSET_SIDE_3 RGB(255, 95, 45)
-#define COLOR_CITY_SUNSET_SIDE_4 RGB(235, 61, 62)
-#define COLOR_CITY_SUNSET_SIDE_5 RGB(196, 35, 68)
-
-//http://www.colourlovers.com/palette/1156217/THE_CITY_AT_MIDDAY
-#define COLOR_CITY_MIDDAY_1 RGB(243,238,209)
-#define COLOR_CITY_MIDDAY_2 RGB(52,94,107)
-#define COLOR_CITY_MIDDAY_3 RGB(117,120,131)
-#define COLOR_CITY_MIDDAY_4 RGB(211,180,56)
-#define COLOR_CITY_MIDDAY_5 RGB(205,93,93)
-
-#define COLOR_CITY_MIDDAY_SIDE_1 RGB(243-5,238-5,209-5)
-#define COLOR_CITY_MIDDAY_SIDE_2 RGB(52-5, 94-5, 107-5)
-#define COLOR_CITY_MIDDAY_SIDE_3 RGB(117-5,120-5,131-5)
-#define COLOR_CITY_MIDDAY_SIDE_4 RGB(211-5,180-5,56-5)
-#define COLOR_CITY_MIDDAY_SIDE_5 RGB(205-5,93-5, 93-5)
-
 
 //http://www.colourlovers.com/palette/758733/Art_Glass_Screen
 #define COLOR_WINDOW_1 RGB(254, 252, 174)
@@ -158,6 +131,7 @@ public:
    void MoveObjects(double dz);
 
 protected:
+   inline void PrepareDraw(World & world, WorldObject*, double cameraZPos, double cameraCutOff);
    void MoveObjects(std::vector<WorldObject*> &row, double dz);
    void CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom);
    void CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent);
@@ -217,6 +191,12 @@ protected:
 
    std::vector<City*> m_regions;
    Road m_road;
+   std::vector<COLORREF>  m_front1;
+   std::vector<COLORREF>  m_side1 ;
+   std::vector<COLORREF>  m_front2;
+   std::vector<COLORREF>  m_side2 ;
+   std::vector<COLORREF>  m_front3;
+   std::vector<COLORREF>  m_side3;
 
    enum KeyPressed
    {
