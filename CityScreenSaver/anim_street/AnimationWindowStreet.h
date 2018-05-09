@@ -93,6 +93,8 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////////
+typedef std::vector<WorldObject*> WorldObjectRow;
+
 class  City
 {
 public:
@@ -100,15 +102,17 @@ public:
    int    m_cellCount;
    double m_cellDepth;
 
-   std::vector<WorldObject*> m_leftRow1;
-   std::vector<WorldObject*> m_leftRow2;
-   std::vector<WorldObject*> m_leftRow3;
-   std::vector<WorldObject*> m_rightRow1;
-   std::vector<WorldObject*> m_rightRow2;
-   std::vector<WorldObject*> m_rightRow3;
-   //int m_houseCount;
+   WorldObjectRow               m_objects;
+   std::vector<WorldObjectRow*> m_rows;
 
-   std::vector<WorldObject*> m_balls;
+   //dp std::vector<WorldObject*> m_leftRow1;
+   //dp std::vector<WorldObject*> m_leftRow2;
+   //dp std::vector<WorldObject*> m_leftRow3;
+   //dp std::vector<WorldObject*> m_rightRow1;
+   //dp std::vector<WorldObject*> m_rightRow2;
+   //dp std::vector<WorldObject*> m_rightRow3;
+   //dp 
+   //dp std::vector<WorldObject*> m_balls;
    std::vector<COLORREF> * m_frontColors;
    std::vector<COLORREF> * m_sideColors;
 

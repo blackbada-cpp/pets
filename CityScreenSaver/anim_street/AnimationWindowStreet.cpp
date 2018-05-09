@@ -223,10 +223,10 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_planeWidth  = rc.Width();
    m_planeHeight = rc.Height();
 
-
-   //dp City m_city1;
-   //dp City m_city2;
-   //dp City m_city1copy;
+   House::MAX_HOUSE_HEIGHT = House::GetMaxHouseHeight(&rc);
+   House::MAX_HOUSE_WIDTH = House::GetMaxHouseWidth(&rc);
+   House::WINDOW_HEIGHT = House::GetWindowHeight(&rc);
+   House::WINDOW_WIDTH = House::GetWindowWidth(&rc);
 
    m_regions.push_back(new City);
    m_regions.push_back(new City);
@@ -403,13 +403,13 @@ City::City()
 
 City::~City()
 {
-   DestroyRow(m_balls);
-   DestroyRow(m_leftRow1);
-   DestroyRow(m_leftRow2);
-   DestroyRow(m_leftRow3);
-   DestroyRow(m_rightRow1);
-   DestroyRow(m_rightRow2);
-   DestroyRow(m_rightRow3);
+   for (auto it = m_rows.begin(); it != m_rows.end(); ++it)
+   {
+      WorldObjectRow * row = *it;
+      DestroyRow(*row);
+      delete row;
+   }
+   m_rows.clear();
 }
 
 void City::CopyFrom(City &other)
@@ -420,13 +420,15 @@ void City::CopyFrom(City &other)
    m_sideColors  = other.m_sideColors;
    m_pos         = other.m_pos;
 
-   CopyRow(m_balls    , other.m_balls    );
-   CopyRow(m_leftRow1 , other.m_leftRow1 );
-   CopyRow(m_leftRow2 , other.m_leftRow2 );
-   CopyRow(m_leftRow3 , other.m_leftRow3 );
-   CopyRow(m_rightRow1, other.m_rightRow1);
-   CopyRow(m_rightRow2, other.m_rightRow2);
-   CopyRow(m_rightRow3, other.m_rightRow3);
+   CopyRow(m_objects, other.m_objects);
+   for (auto it = other.m_rows.begin(); it != other.m_rows.end(); ++it)
+   {
+      WorldObjectRow & otherRow = *(*it);
+      WorldObjectRow * row = new WorldObjectRow();
+      CopyRow(*row, otherRow);
+
+      m_rows.push_back(row);
+   }
 }
 
 void City::DestroyRow(std::vector<WorldObject*> &row)
@@ -453,7 +455,9 @@ int RangedRandInt(int range_min, int range_max)
    return (int)RangedRand(range_min, range_max);
 }
 
-void City::Init(CRect & rc, double z, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
+void City::Init(CRect & rc, 
+   double z, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber,
+   std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
 {
    m_pos.z = z;
    m_cellCount = cellCount;
@@ -461,55 +465,57 @@ void City::Init(CRect & rc, double z, int cellCount, double cellDepth, double gr
    m_frontColors = &frontColors;
    m_sideColors = &sideColors;
 
-   //////////////////////////////////////////////////////////////////////////
-   House::MAX_HOUSE_HEIGHT = House::GetMaxHouseHeight(&rc);
-   House::MAX_HOUSE_WIDTH = House::GetMaxHouseWidth(&rc);
-   House::WINDOW_HEIGHT = House::GetWindowHeight(&rc);
-   House::WINDOW_WIDTH = House::GetWindowWidth(&rc);
 
    int i;
    //////////////////////////////////////////////////////////////////////////
+   m_rows.push_back(new WorldObjectRow());
+   m_rows.push_back(new WorldObjectRow());
+   m_rows.push_back(new WorldObjectRow());
+   m_rows.push_back(new WorldObjectRow());
+   m_rows.push_back(new WorldObjectRow());
+   m_rows.push_back(new WorldObjectRow());
+
    // Init random balls
    for (int i = 0; i < BALL_COUNT; i++)
    {
       Ball * ball = new Ball();
       ball -> SetPos(RangedRand(0, rc.Width()), groundHeight, RangedRand(0, GetCityDepth()));
-      m_balls.push_back(ball);
+      m_objects.push_back(ball);
    }
 
    //////////////////////////////////////////////////////////////////////////
-   m_rightRow1.assign(m_cellCount, NULL);
-   m_rightRow2.assign(m_cellCount, NULL);
-   m_rightRow3.assign(m_cellCount, NULL);
-   m_leftRow1.assign(m_cellCount, NULL);
-   m_leftRow2.assign(m_cellCount, NULL);
-   m_leftRow3.assign(m_cellCount, NULL);
+   m_rows[0]->assign(m_cellCount, NULL);
+   m_rows[1]->assign(m_cellCount, NULL);
+   m_rows[2]->assign(m_cellCount, NULL);
+   m_rows[3]->assign(m_cellCount, NULL);
+   m_rows[4]->assign(m_cellCount, NULL);
+   m_rows[5]->assign(m_cellCount, NULL);
 
    //Create side roads
    //Create extra objects
    //Create houses
-   CreateRow(m_leftRow1,  0, (int)(m_cellCount*0.5), 50);
-   CreateRow(m_leftRow2,  0, (int)(m_cellCount*0.5), 40);
-   CreateRow(m_leftRow3,  0, (int)(m_cellCount*0.5), 10);
-   CreateRow(m_rightRow1, 0, (int)(m_cellCount*0.5), 50);
-   CreateRow(m_rightRow2, 0, (int)(m_cellCount*0.5), 40);
-   CreateRow(m_rightRow3, 0, (int)(m_cellCount*0.5), 10);
-   CreateRow(m_leftRow1,  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
-   CreateRow(m_leftRow2,  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
-   CreateRow(m_leftRow3,  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
-   CreateRow(m_rightRow1, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
-   CreateRow(m_rightRow2, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
-   CreateRow(m_rightRow3, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
+   CreateRow(*m_rows[0], 0, (int)(m_cellCount*0.5), 50);
+   CreateRow(*m_rows[1], 0, (int)(m_cellCount*0.5), 40);
+   CreateRow(*m_rows[2], 0, (int)(m_cellCount*0.5), 10);
+   CreateRow(*m_rows[3], 0, (int)(m_cellCount*0.5), 50);
+   CreateRow(*m_rows[4], 0, (int)(m_cellCount*0.5), 40);
+   CreateRow(*m_rows[5], 0, (int)(m_cellCount*0.5), 10);
+   CreateRow(*m_rows[0],  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
+   CreateRow(*m_rows[1],  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
+   CreateRow(*m_rows[2],  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
+   CreateRow(*m_rows[3], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
+   CreateRow(*m_rows[4], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
+   CreateRow(*m_rows[5], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
 
    //////////////////////////////////////////////////////////////////////////
    //Init houses
    double widthLimit = rc.right;
-   InitCellRow(m_rightRow1, rc.right                             , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(m_rightRow2, rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(m_rightRow3, rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(m_leftRow1,  0 - 2 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(m_leftRow2,  0 - 4 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(m_leftRow3,  0 - 6 * House::MAX_HOUSE_WIDTH       , groundHeight, 2*House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(*m_rows[0], 0 - 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(*m_rows[1], 0 - 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(*m_rows[2], 0 - 6 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(*m_rows[3], rc.right, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(*m_rows[4], rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   InitCellRow(*m_rows[5], rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
 }
 
 void City::CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom)
@@ -599,6 +605,7 @@ void City::PrepareDraw(World & world, double cameraZPos, double cameraCutOff)
    for (i = 0; i < m_cellCount; i++)
    {
       bool showCell = true;
+      //Camera cut off optimization
       //Draw all rows at-once per-cell
       if (cellZPos > cameraZPos + cameraCutOff)
          showCell = false; //row cells are too far away
@@ -607,20 +614,21 @@ void City::PrepareDraw(World & world, double cameraZPos, double cameraCutOff)
 
       if (showCell)
       {
-         world.Add(m_leftRow1[i]);
-         world.Add(m_leftRow2[i]);
-         world.Add(m_leftRow3[i]);
-         world.Add(m_rightRow1[i]);
-         world.Add(m_rightRow2[i]);
-         world.Add(m_rightRow3[i]);
+         for (auto it = m_rows.begin(); it != m_rows.end(); ++it)
+         {
+            WorldObjectRow & row = *(*it);
+            world.Add(row[i]);
+         }
       }
       
       cellZPos += m_cellDepth;
    }
 
-   for (i = m_balls.size() - 1; i >= 0; i--)
+   
+   WorldObjectRow & ballRow = *m_rows[0];
+   for (i = ballRow.size() - 1; i >= 0; i--)
    {
-      PrepareDraw(world, m_balls[i], cameraZPos, cameraCutOff);
+      PrepareDraw(world, ballRow[i], cameraZPos, cameraCutOff);
    }
 }
 
@@ -672,13 +680,12 @@ void City::MoveObjects(std::vector<WorldObject*> &row, double dz)
 void City::MoveObjects(double dz)
 {
    m_pos.z += dz;
-   MoveObjects(m_balls,     dz);
-   MoveObjects(m_rightRow1, dz);
-   MoveObjects(m_rightRow2, dz);
-   MoveObjects(m_rightRow3, dz);
-   MoveObjects(m_leftRow1,  dz);
-   MoveObjects(m_leftRow2,  dz);
-   MoveObjects(m_leftRow3,  dz);
+   MoveObjects(m_objects, dz);
+   for (auto it = m_rows.begin(); it != m_rows.end(); ++it)
+   {
+      WorldObjectRow & row = *(*it);
+      MoveObjects(row, dz);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////
