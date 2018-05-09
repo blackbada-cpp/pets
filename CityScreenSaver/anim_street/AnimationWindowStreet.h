@@ -122,7 +122,7 @@ public:
 
    double GetCityDepth() const { return m_cellCount *m_cellDepth; }
    void CopyFrom(City &other);
-   void Init(CRect & rc, double z, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
+   void Init(CRect & rc, double z, int rowCount, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
    void PrepareDraw(World & world, double cameraZPos, double cameraCutOff);
    
 #ifndef MOVE_CAMERA

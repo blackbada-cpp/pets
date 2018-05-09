@@ -232,9 +232,13 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_regions.push_back(new City);
    m_regions.push_back(new City);
    m_regions.push_back(new City);
-   m_regions[0]->Init(rc, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, m_front1, m_side1);
-   m_regions[1]->Init(rc, CITY_DEPTH, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 14, m_front2, m_side2);
-   m_regions[2]->Init(rc, CITY_DEPTH*2., HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3);
+   m_regions.push_back(new City);
+   m_regions.push_back(new City);
+   m_regions[0]->Init(rc, 0,              2,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, m_front1, m_side1);
+   m_regions[1]->Init(rc, CITY_DEPTH * 1, 0,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3); //Countyside
+   m_regions[2]->Init(rc, CITY_DEPTH * 2, 10, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 30, m_front2, m_side2);
+   m_regions[3]->Init(rc, CITY_DEPTH * 3, 0,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3); //Countyside
+   m_regions[4]->Init(rc, CITY_DEPTH * 4, 1,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3);
 
    //Duplicate 1st city
    double totalDepth = 0.0;
@@ -456,7 +460,7 @@ int RangedRandInt(int range_min, int range_max)
 }
 
 void City::Init(CRect & rc, 
-   double z, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber,
+   double z, int rowCount, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber,
    std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
 {
    m_pos.z = z;
@@ -467,55 +471,82 @@ void City::Init(CRect & rc,
 
 
    int i;
-   //////////////////////////////////////////////////////////////////////////
-   m_rows.push_back(new WorldObjectRow());
-   m_rows.push_back(new WorldObjectRow());
-   m_rows.push_back(new WorldObjectRow());
-   m_rows.push_back(new WorldObjectRow());
-   m_rows.push_back(new WorldObjectRow());
-   m_rows.push_back(new WorldObjectRow());
-
    // Init random balls
-   for (int i = 0; i < BALL_COUNT; i++)
+   for (i = 0; i < BALL_COUNT; i++)
    {
       Ball * ball = new Ball();
       ball -> SetPos(RangedRand(0, rc.Width()), groundHeight, RangedRand(0, GetCityDepth()));
       m_objects.push_back(ball);
    }
+   
+   //Left rows
+   for (int i = 0; i<rowCount; i++)
+   {
+      WorldObjectRow * row = new WorldObjectRow();
+      m_rows.push_back(row);
+      row->assign(m_cellCount, NULL);
+      
+      double p = ((double)(rowCount - i) / (double)rowCount) * 50.0;
+      double p1 = ((double)(rowCount - i) / (double)rowCount) * 20.0;
+      CreateRow(*row, 0, (int)(m_cellCount*0.5), p);
+      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1);
+      
+      InitCellRow(*row, 0 - (i + 1) * 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
 
-   //////////////////////////////////////////////////////////////////////////
-   m_rows[0]->assign(m_cellCount, NULL);
-   m_rows[1]->assign(m_cellCount, NULL);
-   m_rows[2]->assign(m_cellCount, NULL);
-   m_rows[3]->assign(m_cellCount, NULL);
-   m_rows[4]->assign(m_cellCount, NULL);
-   m_rows[5]->assign(m_cellCount, NULL);
+      //dp CreateRow(*m_rows[0], 0, (int)(m_cellCount*0.5), 50);
+      //dp CreateRow(*m_rows[1], 0, (int)(m_cellCount*0.5), 40);
+      //dp CreateRow(*m_rows[2], 0, (int)(m_cellCount*0.5), 10);
+      
+      //dp CreateRow(*m_rows[0], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
+      //dp CreateRow(*m_rows[1], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
+      //dp CreateRow(*m_rows[2], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
 
-   //Create side roads
-   //Create extra objects
+      //dp InitCellRow(*m_rows[0], 0 - 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+      //dp InitCellRow(*m_rows[1], 0 - 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+      //dp InitCellRow(*m_rows[2], 0 - 6 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   }
+   
+   //Right rows
+   for (int i = 0; i < rowCount; i++)
+   {
+      WorldObjectRow * row = new WorldObjectRow();
+      m_rows.push_back(row);
+      row->assign(m_cellCount, NULL);
+
+      double p = ((double)(rowCount - i) / (double)rowCount) * 50.0;
+      double p1 = ((double)(rowCount - i) / (double)rowCount) * 20.0;
+      CreateRow(*row, 0, (int)(m_cellCount*0.5), p);
+      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1);
+
+      InitCellRow(*row, rc.right + i * 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+      //dp InitCellRow(*m_rows[3], rc.right, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+      //dp InitCellRow(*m_rows[4], rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+      //dp InitCellRow(*m_rows[5], rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   }
+
    //Create houses
-   CreateRow(*m_rows[0], 0, (int)(m_cellCount*0.5), 50);
-   CreateRow(*m_rows[1], 0, (int)(m_cellCount*0.5), 40);
-   CreateRow(*m_rows[2], 0, (int)(m_cellCount*0.5), 10);
-   CreateRow(*m_rows[3], 0, (int)(m_cellCount*0.5), 50);
-   CreateRow(*m_rows[4], 0, (int)(m_cellCount*0.5), 40);
-   CreateRow(*m_rows[5], 0, (int)(m_cellCount*0.5), 10);
-   CreateRow(*m_rows[0],  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
-   CreateRow(*m_rows[1],  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
-   CreateRow(*m_rows[2],  (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
-   CreateRow(*m_rows[3], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
-   CreateRow(*m_rows[4], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
-   CreateRow(*m_rows[5], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
+   //dp CreateRow(*m_rows[0], 0, (int)(m_cellCount*0.5), 50);
+   //dp CreateRow(*m_rows[1], 0, (int)(m_cellCount*0.5), 40);
+   //dp CreateRow(*m_rows[2], 0, (int)(m_cellCount*0.5), 10);
+   //dp CreateRow(*m_rows[0], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
+   //dp CreateRow(*m_rows[1], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
+   //dp CreateRow(*m_rows[2], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
+   
+   //dp CreateRow(*m_rows[3], 0, (int)(m_cellCount*0.5), 50);
+   //dp CreateRow(*m_rows[4], 0, (int)(m_cellCount*0.5), 40);
+   //dp CreateRow(*m_rows[5], 0, (int)(m_cellCount*0.5), 10);
+   //dp CreateRow(*m_rows[3], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
+   //dp CreateRow(*m_rows[4], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
+   //dp CreateRow(*m_rows[5], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
 
    //////////////////////////////////////////////////////////////////////////
    //Init houses
-   double widthLimit = rc.right;
-   InitCellRow(*m_rows[0], 0 - 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(*m_rows[1], 0 - 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(*m_rows[2], 0 - 6 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(*m_rows[3], rc.right, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(*m_rows[4], rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   InitCellRow(*m_rows[5], rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   //dp InitCellRow(*m_rows[0], 0 - 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   //dp InitCellRow(*m_rows[1], 0 - 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   //dp InitCellRow(*m_rows[2], 0 - 6 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   //dp InitCellRow(*m_rows[3], rc.right                             , groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   //dp InitCellRow(*m_rows[4], rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+   //dp InitCellRow(*m_rows[5], rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
 }
 
 void City::CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom)
@@ -625,10 +656,9 @@ void City::PrepareDraw(World & world, double cameraZPos, double cameraCutOff)
    }
 
    
-   WorldObjectRow & ballRow = *m_rows[0];
-   for (i = ballRow.size() - 1; i >= 0; i--)
+   for (i = m_objects.size() - 1; i >= 0; i--)
    {
-      PrepareDraw(world, ballRow[i], cameraZPos, cameraCutOff);
+      PrepareDraw(world, m_objects[i], cameraZPos, cameraCutOff);
    }
 }
 
