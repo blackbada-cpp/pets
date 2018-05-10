@@ -39,6 +39,8 @@
 
 #define D_PERCENT   (2.0)
 
+#define COLOR_ASPHALT RGB(0x28, 0x2B, 0x2A)
+
 //http://www.rapidtables.com/web/color/RGB_Color.htm
 //#define FRONT_COLOR_1 RGB(255, 165, 0),  //orange
 //#define FRONT_COLOR_1 RGB(255, 235, 205),//
@@ -93,6 +95,27 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////////
+//TODO: class Road : public WorldObject
+class Road : public WorldObject
+{
+public:
+   double m_LineLength;
+   double m_LineStep; // = m_LineLength + gap
+   double m_LineWidth;
+   double m_cellDepth;
+
+public:
+   Road();
+   Road(Road & other);
+   ~Road();
+   virtual WorldObject * Clone();
+
+   void Init(CRect & rc, double zPos, double groundHeight, double depth, double cellDepth);
+
+   virtual void DoDraw(CDC3D & dc);
+};
+
+//////////////////////////////////////////////////////////////////////////
 typedef std::vector<WorldObject*> WorldObjectRow;
 
 class  City
@@ -102,17 +125,10 @@ public:
    int    m_cellCount;
    double m_cellDepth;
 
+   Road m_road;
    WorldObjectRow               m_objects;
    std::vector<WorldObjectRow*> m_rows;
 
-   //dp std::vector<WorldObject*> m_leftRow1;
-   //dp std::vector<WorldObject*> m_leftRow2;
-   //dp std::vector<WorldObject*> m_leftRow3;
-   //dp std::vector<WorldObject*> m_rightRow1;
-   //dp std::vector<WorldObject*> m_rightRow2;
-   //dp std::vector<WorldObject*> m_rightRow3;
-   //dp 
-   //dp std::vector<WorldObject*> m_balls;
    std::vector<COLORREF> * m_frontColors;
    std::vector<COLORREF> * m_sideColors;
 
@@ -144,28 +160,6 @@ protected:
 
 };
 
-//////////////////////////////////////////////////////////////////////////
-//TODO: class Road : public WorldObject
-class Road
-{
-public:
-   double m_zStart;
-   double m_Length;
-   double m_LineLength;
-   double m_LineStep; // = m_LineLength + gap
-   double m_LineWidth;
-   double m_houseStep;
-   double m_LineX;
-
-public:
-   Road(double length, double houseStep);
-   ~Road();
-
-   void Init(CRect & rc);
-   void Draw(CDC3D & dc, RECT* prc);
-   void MoveForward(RECT * prc, double dz, double z_camera);
-};
-
 
 //////////////////////////////////////////////////////////////////////////
 // Main window
@@ -194,7 +188,6 @@ protected:
    const double m_cellDepth      = CELL_DEPTH; //Step between front wall of 2 houses 
 
    std::vector<City*> m_regions;
-   Road m_road;
    std::vector<COLORREF>  m_front1;
    std::vector<COLORREF>  m_side1 ;
    std::vector<COLORREF>  m_front2;

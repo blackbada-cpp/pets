@@ -119,8 +119,7 @@ static COLORREF st_sideVillage[COLORS_MAX] =
 
 
 CAnimationWindowStreet::CAnimationWindowStreet(CWnd* pParent /*=NULL*/)
-: m_road(HOUSE_COUNT * m_cellDepth, m_cellDepth)
-, m_pressed(key_Nothing)
+: m_pressed(key_Nothing)
 , m_cxPercent(X_INIT_PERCENT)
 , m_cyPercent(Y_INIT_PERCENT)
 , m_cameraSpeed(CAMERA_SPEED)
@@ -250,8 +249,6 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_regions[3]->CopyFrom(*m_regions[0]);
    m_regions[3]->MoveObjects(totalDepth);
    
-   m_road.Init(rc);
-
 #ifdef MOVE_CAMERA
    m_worldWrapDepth = totalDepth;
 #endif
@@ -352,9 +349,6 @@ void CAnimationWindowStreet::DrawStreet(CDC3D & dc, RECT* prc)
    dc.FillRect(rSky, &brushDay);
    dc.FillRect(rGround, &brushLawn);
 
-   //Draw Road infrastructure
-   m_road.Draw(dc, prc);
-
    //Draw 3D Objects
    World world;
    for (auto it = m_regions.begin(); it != m_regions.end(); ++it)
@@ -397,7 +391,8 @@ void CAnimationWindowStreet::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 //////////////////////////////////////////////////////////////////////////
 City::City()
-: m_cellCount(0)
+: m_road()
+, m_cellCount(0)
 , m_cellDepth(0.0)
 , m_frontColors(NULL)
 , m_sideColors(NULL)
@@ -423,6 +418,7 @@ void City::CopyFrom(City &other)
    m_frontColors = other.m_frontColors;
    m_sideColors  = other.m_sideColors;
    m_pos         = other.m_pos;
+   m_road        = other.m_road;
 
    CopyRow(m_objects, other.m_objects);
    for (auto it = other.m_rows.begin(); it != other.m_rows.end(); ++it)
@@ -463,12 +459,14 @@ void City::Init(CRect & rc,
    double z, int rowCount, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber,
    std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
 {
+
    m_pos.z = z;
    m_cellCount = cellCount;
    m_cellDepth = cellDepth;
    m_frontColors = &frontColors;
    m_sideColors = &sideColors;
 
+   m_road.Init(rc, z, groundHeight, GetCityDepth(), cellDepth);
 
    int i;
    // Init random balls
@@ -486,12 +484,15 @@ void City::Init(CRect & rc,
       m_rows.push_back(row);
       row->assign(m_cellCount, NULL);
       
+      //housePercent: Create more houses next to the road, less to the left
       double p = ((double)(rowCount - i) / (double)rowCount) * 50.0;
       double p1 = ((double)(rowCount - i) / (double)rowCount) * 20.0;
-      CreateRow(*row, 0, (int)(m_cellCount*0.5), p);
-      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1);
+      CreateRow(*row, 0, (int)(m_cellCount*0.5), p); //half of the city
+      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1); //the rest of the city till 70%
       
-      InitCellRow(*row, 0 - (i + 1) * 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+      //cellXPos: rows start from the road to the left
+      int cellXPos = 0 - (i + 1) * 2 * House::MAX_HOUSE_WIDTH;
+      InitCellRow(*row, cellXPos, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
 
       //dp CreateRow(*m_rows[0], 0, (int)(m_cellCount*0.5), 50);
       //dp CreateRow(*m_rows[1], 0, (int)(m_cellCount*0.5), 40);
@@ -513,12 +514,15 @@ void City::Init(CRect & rc,
       m_rows.push_back(row);
       row->assign(m_cellCount, NULL);
 
+      //housePercent: Create more houses next to the road, less to the right
       double p = ((double)(rowCount - i) / (double)rowCount) * 50.0;
       double p1 = ((double)(rowCount - i) / (double)rowCount) * 20.0;
-      CreateRow(*row, 0, (int)(m_cellCount*0.5), p);
-      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1);
+      CreateRow(*row, 0, (int)(m_cellCount*0.5), p); //half of the city
+      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1); //the rest, till 70%
 
-      InitCellRow(*row, rc.right + i * 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
+      //cellXPos: rows start from the road to the right
+      int cellXPos = rc.right + i * 2 * House::MAX_HOUSE_WIDTH;
+      InitCellRow(*row, cellXPos, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
       //dp InitCellRow(*m_rows[3], rc.right, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
       //dp InitCellRow(*m_rows[4], rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
       //dp InitCellRow(*m_rows[5], rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
@@ -631,6 +635,9 @@ void City::PrepareDraw(World & world, double cameraZPos, double cameraCutOff)
    if (m_pos.z + GetCityDepth() < cameraZPos)
       return; //city is behind
 
+   //Road infrastructure
+   PrepareDraw(world, &m_road, cameraZPos, cameraCutOff);
+
    int i;
    double cellZPos = m_pos.z;
    for (i = 0; i < m_cellCount; i++)
@@ -710,6 +717,7 @@ void City::MoveObjects(std::vector<WorldObject*> &row, double dz)
 void City::MoveObjects(double dz)
 {
    m_pos.z += dz;
+   m_road.m_pos.z + -dz;
    MoveObjects(m_objects, dz);
    for (auto it = m_rows.begin(); it != m_rows.end(); ++it)
    {
@@ -747,16 +755,18 @@ void BitmapObject::DoDraw(CDC3D & dc)
 
 
 //////////////////////////////////////////////////////////////////////////
-Road::Road(double length, double houseStep)
-   : m_zStart(-houseStep)
-   , m_Length(length)
-   , m_LineLength(0.0)
-   , m_LineStep(houseStep)
+Road::Road()
+   : m_LineLength(0.0)
+   , m_LineStep(0.0)
    , m_LineWidth(0.0)
-   , m_houseStep(houseStep)
-   , m_LineX(0.0)
+   , m_cellDepth(0.0)
 {
 
+}
+
+Road::Road(Road & other)
+   : WorldObject(other)
+{
 }
 
 Road::~Road()
@@ -764,28 +774,37 @@ Road::~Road()
 
 }
 
-void Road::Init(CRect & rc)
+
+WorldObject * Road::Clone()
 {
-   m_LineWidth = rc.Width() / 100.0;
-   m_LineStep = m_houseStep / 2.0;
-   m_LineLength = m_LineStep / 3.0;
-   m_LineX = rc.Width() / 2.0;
+   return new Road();
 }
 
-void Road::Draw(CDC3D & dc, RECT* prc)
+
+void Road::Init(CRect & rc, double zPos, double groundHeight, double depth, double cellDepth)
 {
-   double groundHeight = ::GetGroundHeight(prc);
-   double laneWidth = (prc->right - prc->left) / 10.0;
+   SetPos(0, groundHeight, zPos);
+   SetSize(rc.Width(), 0, depth);
+   m_LineStep = cellDepth;
+   m_cellDepth = cellDepth;
+   m_LineWidth = rc.Width() / 100.0;
+   m_LineStep = m_cellDepth / 2.0;
+   m_LineLength = m_LineStep / 3.0;
+}
+
+void Road::DoDraw(CDC3D & dc)
+{
+   double laneWidth = m_size.w / 10.0;
    double borderWidth = laneWidth / 10.0;
    double borderHeight = borderWidth;
    double roadLeftBorder = laneWidth;
-   double roadRightBorder = prc->right - laneWidth;
+   double roadRightBorder = m_pos.x + m_size.w - laneWidth;
 
    //Draw asphalt
 #if 1
    {
       //TODO: Fix artifacts, lines drawn from left-upper corner
-      COLORREF colAsphalt = RGB(0x28, 0x2B, 0x2A); //Asphalt
+      COLORREF colAsphalt = COLOR_ASPHALT;
       CBrush brushRoad; brushRoad.CreateSolidBrush(colAsphalt);
 
       CPen     pen;   pen.CreatePen(PS_SOLID, 1, colAsphalt);
@@ -794,17 +813,34 @@ void Road::Draw(CDC3D & dc, RECT* prc)
       CPen   * oldPen = dc.SelectObject(&pen);
       CBrush * oldBrush = dc.SelectObject(&brush);
 
-      POINT pRoad[3];
-      pRoad[0].x = dc.HorizonX();
-      pRoad[0].y = dc.HorizonY();
+      //POINT pRoad[3];
+      POINT3D pRoad[4];
 
-      pRoad[1].x = dc.ProjectionX(prc->right - laneWidth, dc.GetEyeZ());
-      pRoad[1].y = dc.ProjectionY(groundHeight, dc.GetEyeZ());
+      pRoad[0].x = roadLeftBorder;
+      pRoad[0].y = m_pos.y;
+      pRoad[1].x = roadRightBorder;
+      pRoad[1].y = m_pos.y;
+      pRoad[2].x = roadRightBorder;
+      pRoad[2].y = m_pos.y;
+      pRoad[3].x = roadLeftBorder;
+      pRoad[3].y = m_pos.y;
+      
+      pRoad[0].z = m_pos.z + m_size.d;
+      pRoad[1].z = m_pos.z + m_size.d;
+      pRoad[2].z = dc.GetEyeZ();// m_pos.z;
+      pRoad[3].z = dc.GetEyeZ();// m_pos.z;
 
-      pRoad[2].x = dc.ProjectionX(roadLeftBorder, dc.GetEyeZ());
-      pRoad[2].y = dc.ProjectionY(groundHeight, dc.GetEyeZ());
+      //pRoad[0].x = dc.HorizonX();
+      //pRoad[0].y = dc.HorizonY();
+      //
+      //pRoad[1].x = dc.ProjectionX(roadRightBorder, dc.GetEyeZ());
+      //pRoad[1].y = dc.ProjectionY(m_pos.y, dc.GetEyeZ());
+      //
+      //pRoad[2].x = dc.ProjectionX(roadLeftBorder, dc.GetEyeZ());
+      //pRoad[2].y = dc.ProjectionY(m_pos.y, dc.GetEyeZ());
 
-      ((CDC&)dc).Polygon(pRoad, 3);
+      //((CDC&)dc).Polygon(pRoad, 3);
+      dc.Polygon(pRoad, 4);
 
       dc.SelectObject(oldPen);
       dc.SelectObject(oldBrush);
@@ -813,25 +849,27 @@ void Road::Draw(CDC3D & dc, RECT* prc)
 
    //Draw central line
    {
-      COLORREF colAsphalt = RGB(0xff, 0xff, 0xff); //White line
-      CBrush brushRoad; brushRoad.CreateSolidBrush(colAsphalt);
+      COLORREF colLine = RGB(0xff, 0xff, 0xff); //White line
+      CBrush brushRoad; brushRoad.CreateSolidBrush(colLine);
 
-      CPen     pen;   pen.CreatePen(PS_SOLID, 1, colAsphalt);
-      CBrush   brush; brush.CreateSolidBrush(colAsphalt);
+      CPen     pen;   pen.CreatePen(PS_SOLID, 1, colLine);
+      CBrush   brush; brush.CreateSolidBrush(colLine);
 
       CPen   * oldPen = dc.SelectObject(&pen);
       CBrush * oldBrush = dc.SelectObject(&brush);
 
+      
+      double lineX = m_size.w / 2.0;
       POINT3D pLine[4];
-      pLine[0].x = m_LineX;
-      pLine[0].y = groundHeight;
-      pLine[1].x = m_LineX;
-      pLine[1].y = groundHeight;
-      pLine[2].x = m_LineX + m_LineWidth;
-      pLine[2].y = groundHeight;
-      pLine[3].x = m_LineX + m_LineWidth;
-      pLine[3].y = groundHeight;
-      for (double z = m_zStart; z < m_Length; z += m_LineStep)
+      pLine[0].x = lineX;
+      pLine[0].y = m_pos.y;
+      pLine[1].x = lineX;
+      pLine[1].y = m_pos.y;
+      pLine[2].x = lineX + m_LineWidth;
+      pLine[2].y = m_pos.y;
+      pLine[3].x = lineX + m_LineWidth;
+      pLine[3].y = m_pos.y;
+      for (double z = m_pos.z; z < m_pos.z + m_size.d; z += m_LineStep)
       {
          pLine[0].z = z;
          pLine[1].z = z + m_LineLength;
@@ -860,45 +898,45 @@ void Road::Draw(CDC3D & dc, RECT* prc)
       POINT3D pStoneLeftTop[4];
       POINT3D pStoneLeftSide[4];
       pStoneLeftTop[0].x = roadLeftBorder - borderWidth;
-      pStoneLeftTop[0].y = groundHeight - borderHeight;
+      pStoneLeftTop[0].y = m_pos.y - borderHeight;
       pStoneLeftTop[1].x = roadLeftBorder - borderWidth;
-      pStoneLeftTop[1].y = groundHeight - borderHeight;
+      pStoneLeftTop[1].y = m_pos.y - borderHeight;
       pStoneLeftTop[2].x = roadLeftBorder;
-      pStoneLeftTop[2].y = groundHeight - borderHeight;
+      pStoneLeftTop[2].y = m_pos.y - borderHeight;
       pStoneLeftTop[3].x = roadLeftBorder;
-      pStoneLeftTop[3].y = groundHeight - borderHeight;
+      pStoneLeftTop[3].y = m_pos.y - borderHeight;
 
       pStoneLeftSide[0].x = roadLeftBorder;
-      pStoneLeftSide[0].y = groundHeight - borderHeight;
+      pStoneLeftSide[0].y = m_pos.y - borderHeight;
       pStoneLeftSide[1].x = roadLeftBorder;
-      pStoneLeftSide[1].y = groundHeight - borderHeight;
+      pStoneLeftSide[1].y = m_pos.y - borderHeight;
       pStoneLeftSide[2].x = roadLeftBorder;
-      pStoneLeftSide[2].y = groundHeight;
+      pStoneLeftSide[2].y = m_pos.y;
       pStoneLeftSide[3].x = roadLeftBorder;
-      pStoneLeftSide[3].y = groundHeight;
+      pStoneLeftSide[3].y = m_pos.y;
 
       POINT3D pStoneRightTop[4];
       POINT3D pStoneRightSide[4];
       //Right border top
       pStoneRightTop[0].x = roadRightBorder + borderWidth;
-      pStoneRightTop[0].y = groundHeight - borderHeight;
+      pStoneRightTop[0].y = m_pos.y - borderHeight;
       pStoneRightTop[1].x = roadRightBorder + borderWidth;
-      pStoneRightTop[1].y = groundHeight - borderHeight;
+      pStoneRightTop[1].y = m_pos.y - borderHeight;
       pStoneRightTop[2].x = roadRightBorder;
-      pStoneRightTop[2].y = groundHeight - borderHeight;
+      pStoneRightTop[2].y = m_pos.y - borderHeight;
       pStoneRightTop[3].x = roadRightBorder;
-      pStoneRightTop[3].y = groundHeight - borderHeight;
+      pStoneRightTop[3].y = m_pos.y - borderHeight;
 
       pStoneRightSide[0].x = roadRightBorder;
-      pStoneRightSide[0].y = groundHeight - borderHeight;
+      pStoneRightSide[0].y = m_pos.y - borderHeight;
       pStoneRightSide[1].x = roadRightBorder;
-      pStoneRightSide[1].y = groundHeight - borderHeight;
+      pStoneRightSide[1].y = m_pos.y - borderHeight;
       pStoneRightSide[2].x = roadRightBorder;
-      pStoneRightSide[2].y = groundHeight;
+      pStoneRightSide[2].y = m_pos.y;
       pStoneRightSide[3].x = roadRightBorder;
-      pStoneRightSide[3].y = groundHeight;
+      pStoneRightSide[3].y = m_pos.y;
 
-      for (double z = m_zStart - m_LineStep*2; z < m_Length; z += m_LineLength)
+      for (double z = m_pos.z - m_LineStep * 2; z < m_pos.z + m_size.d; z += m_LineLength)
       {
          pStoneLeftTop[0].z = z;
          pStoneLeftTop[1].z = z + m_LineLength;
@@ -925,16 +963,6 @@ void Road::Draw(CDC3D & dc, RECT* prc)
 
       dc.SelectObject(oldPen);
       dc.SelectObject(oldBrush);
-   }
-}
-
-void Road::MoveForward(RECT * prc, double dz, double z_camera)
-{
-   //Move road to the z direction
-   m_zStart -= dz;
-   if (m_zStart < z_camera - m_houseStep - m_houseStep)
-   {
-      m_zStart += m_houseStep;
    }
 }
 
