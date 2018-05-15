@@ -204,6 +204,13 @@ void CAnimationWindowStreet::OnPaint()
       
       dc.BitBlt(rc.left, rc.top, rc.Width(), rc.Height(),
          &mdc, rc.left, rc.top, SRCCOPY);
+      
+      CString msg;
+      msg.Format("Speed = %0.3f", m_cameraSpeed);
+      dc.TextOut(10, 10, msg);
+      msg.Format("%d polygons", mdc.GetPolyCount());
+      dc.TextOut(10, 30, msg);
+
       mdc.SelectObject(oldBitmap);
    }
 }
@@ -233,11 +240,12 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    m_regions.push_back(new City);
    m_regions.push_back(new City);
    m_regions.push_back(new City);
-   m_regions[0]->Init(rc, 0,              2,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, m_front1, m_side1);
-   m_regions[1]->Init(rc, CITY_DEPTH * 1, 0,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3); //Countyside
-   m_regions[2]->Init(rc, CITY_DEPTH * 2, 10, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 30, m_front2, m_side2);
-   m_regions[3]->Init(rc, CITY_DEPTH * 3, 0,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3); //Countyside
-   m_regions[4]->Init(rc, CITY_DEPTH * 4, 1,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3);
+   m_regions[0]->Init(rc, 0              /*z*/, 2,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, m_front1, m_side1, OldTown);
+   m_regions[1]->Init(rc, CITY_DEPTH * 1 /*z*/, 0,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, OldTown); //Countyside
+   m_regions[2]->Init(rc, CITY_DEPTH * 2 /*z*/, 10, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 30, m_front2, m_side2, SkyScraper);
+   m_regions[3]->Init(rc, CITY_DEPTH * 3 /*z*/, 0,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, SkyScraper); //Countyside
+   m_regions[4]->Init(rc, CITY_DEPTH * 4 /*z*/, 1,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3, CountryHouse);
+   m_regions[5]->Init(rc, CITY_DEPTH * 5 /*z*/, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, CountryHouse);
 
    //Duplicate 1st city
    double totalDepth = 0.0;
@@ -457,7 +465,8 @@ int RangedRandInt(int range_min, int range_max)
 
 void City::Init(CRect & rc, 
    double z, int rowCount, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber,
-   std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
+   std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors,
+   HouseStyle style)
 {
 
    m_pos.z = z;
@@ -487,8 +496,8 @@ void City::Init(CRect & rc,
       //housePercent: Create more houses next to the road, less to the left
       double p = ((double)(rowCount - i) / (double)rowCount) * 50.0;
       double p1 = ((double)(rowCount - i) / (double)rowCount) * 20.0;
-      CreateRow(*row, 0, (int)(m_cellCount*0.5), p); //half of the city
-      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1); //the rest of the city till 70%
+      CreateRow(*row, 0, (int)(m_cellCount*0.5), p, style); //half of the city
+      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1, style); //the rest of the city till 70%
       
       //cellXPos: rows start from the road to the left
       int cellXPos = 0 - (i + 1) * 2 * House::MAX_HOUSE_WIDTH;
@@ -517,8 +526,8 @@ void City::Init(CRect & rc,
       //housePercent: Create more houses next to the road, less to the right
       double p = ((double)(rowCount - i) / (double)rowCount) * 50.0;
       double p1 = ((double)(rowCount - i) / (double)rowCount) * 20.0;
-      CreateRow(*row, 0, (int)(m_cellCount*0.5), p); //half of the city
-      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1); //the rest, till 70%
+      CreateRow(*row, 0, (int)(m_cellCount*0.5), p, style); //half of the city
+      CreateRow(*row, (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), p1, style); //the rest, till 70%
 
       //cellXPos: rows start from the road to the right
       int cellXPos = rc.right + i * 2 * House::MAX_HOUSE_WIDTH;
@@ -527,30 +536,6 @@ void City::Init(CRect & rc,
       //dp InitCellRow(*m_rows[4], rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
       //dp InitCellRow(*m_rows[5], rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
    }
-
-   //Create houses
-   //dp CreateRow(*m_rows[0], 0, (int)(m_cellCount*0.5), 50);
-   //dp CreateRow(*m_rows[1], 0, (int)(m_cellCount*0.5), 40);
-   //dp CreateRow(*m_rows[2], 0, (int)(m_cellCount*0.5), 10);
-   //dp CreateRow(*m_rows[0], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
-   //dp CreateRow(*m_rows[1], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
-   //dp CreateRow(*m_rows[2], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
-   
-   //dp CreateRow(*m_rows[3], 0, (int)(m_cellCount*0.5), 50);
-   //dp CreateRow(*m_rows[4], 0, (int)(m_cellCount*0.5), 40);
-   //dp CreateRow(*m_rows[5], 0, (int)(m_cellCount*0.5), 10);
-   //dp CreateRow(*m_rows[3], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 30);
-   //dp CreateRow(*m_rows[4], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 10);
-   //dp CreateRow(*m_rows[5], (int)(m_cellCount*0.5), (int)(m_cellCount*0.7), 5);
-
-   //////////////////////////////////////////////////////////////////////////
-   //Init houses
-   //dp InitCellRow(*m_rows[0], 0 - 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   //dp InitCellRow(*m_rows[1], 0 - 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   //dp InitCellRow(*m_rows[2], 0 - 6 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   //dp InitCellRow(*m_rows[3], rc.right                             , groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   //dp InitCellRow(*m_rows[4], rc.right + 2 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
-   //dp InitCellRow(*m_rows[5], rc.right + 4 * House::MAX_HOUSE_WIDTH, groundHeight, 2 * House::MAX_HOUSE_WIDTH, cellDepth, maxFloorNumber);
 }
 
 void City::CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom)
@@ -562,7 +547,7 @@ void City::CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &ro
       row.push_back(objCopy);
    }
 }
-void City::CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent)
+void City::CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent, HouseStyle style)
 {
    int percentBall = 10;
    //for (auto it = row.begin(); it != row.end(); ++it)
@@ -577,7 +562,7 @@ void City::CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int h
          if (pHouse <= housePercent)
          {
             //*it = new House();
-            row[i] = new House();
+            row[i] = new House(style);
          }
          else 
          {
@@ -827,8 +812,8 @@ void Road::DoDraw(CDC3D & dc)
       
       pRoad[0].z = m_pos.z + m_size.d;
       pRoad[1].z = m_pos.z + m_size.d;
-      pRoad[2].z = dc.GetEyeZ();// m_pos.z;
-      pRoad[3].z = dc.GetEyeZ();// m_pos.z;
+      pRoad[2].z = dc.GetEyeZ(); //m_pos.z;
+      pRoad[3].z = dc.GetEyeZ(); //m_pos.z;
 
       //pRoad[0].x = dc.HorizonX();
       //pRoad[0].y = dc.HorizonY();

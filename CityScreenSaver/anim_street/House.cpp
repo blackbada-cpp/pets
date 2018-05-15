@@ -9,7 +9,8 @@ double House::WINDOW_HEIGHT = 10;
 double House::WINDOW_WIDTH = 10;
 
 
-House::House()
+House::House(HouseStyle style)
+   : m_style(style)
 {
    m_frontCol = RGB(255, 235, 205);
    m_sideCol = RGB(245, 222, 179);
@@ -21,6 +22,7 @@ House::House()
 
 House::House(POINT3D &pos, SIZE3D &size)
 : WorldObject(pos, size)
+, m_style(OldTown)
 {
    m_frontCol = RGB(255, 235, 205);
    m_sideCol = RGB(245, 222, 179);
@@ -32,6 +34,7 @@ House::House(POINT3D &pos, SIZE3D &size)
 
 House::House(int x, int y, int z, int w, int h, int d)
 : WorldObject(x, y, z, w, h, d)
+, m_style(OldTown)
 {
    m_frontCol  = RGB(255, 235, 205);
    m_sideCol   = RGB(245, 222, 179);
@@ -49,6 +52,7 @@ House::House(House & other)
 , m_roofCol     (other.m_roofCol     )
 , m_windowHeight(other.m_windowHeight)
 , m_windowWidth (other.m_windowWidth )
+, m_style       (other.m_style)
 {
 }
 
@@ -69,47 +73,58 @@ void House::DoDraw(CDC3D & dc)
    
    //Left wall
    DrawLeftWallRect(dc, m_sideCol, 0, 0, houseWidth, houseHeight);
-   //Windows
-   if (detail == HighDetailLevel)
+   if (m_style != SkyScraper)
    {
-      for (z = m_windowWidth; z <= houseWidth - m_windowWidth; z += m_windowWidth * 2)
+      //Windows
+      if (detail == HighDetailLevel)
       {
-         //From bottom to top
-         for (y = houseHeight - m_windowHeight*2; y >= m_windowHeight; y -= m_windowHeight * 2)
+         for (z = m_windowWidth; z <= houseWidth - m_windowWidth; z += m_windowWidth * 2)
          {
-            DrawLeftWallRect(dc, m_windowCol, z, y, m_windowWidth, m_windowHeight);
+            //From bottom to top
+            for (y = houseHeight - m_windowHeight * 2; y >= m_windowHeight; y -= m_windowHeight * 2)
+            {
+               DrawLeftWallRect(dc, m_windowCol, z, y, m_windowWidth, m_windowHeight);
+            }
          }
       }
    }
 
    //right wall
    DrawRightWallRect(dc, m_sideCol, 0, 0, houseWidth,  houseHeight);
-   //Windows
-   if (detail == HighDetailLevel)
+   
+   if (m_style != SkyScraper)
    {
-      for (z = m_windowWidth; z <= houseWidth - m_windowWidth; z += m_windowWidth * 2)
+      //Windows
+      if (detail == HighDetailLevel)
       {
-         //From bottom to top
-         for (y = houseHeight - m_windowHeight*2; y >= m_windowHeight; y -= m_windowHeight * 2)
+         for (z = m_windowWidth; z <= houseWidth - m_windowWidth; z += m_windowWidth * 2)
          {
-            DrawRightWallRect(dc, m_windowCol, z, y, m_windowWidth, m_windowHeight);
+            //From bottom to top
+            for (y = houseHeight - m_windowHeight * 2; y >= m_windowHeight; y -= m_windowHeight * 2)
+            {
+               DrawRightWallRect(dc, m_windowCol, z, y, m_windowWidth, m_windowHeight);
+            }
          }
       }
    }
 
    //Front wall
    DrawFrontWallRect(dc, m_frontCol, 0, 0, houseWidth, houseHeight);
-   if (detail != LowDetailLevel)
+   
+   if (m_style != SkyScraper)
    {
-      //Windows
-      if (detail == HighDetailLevel)
+      if (detail != LowDetailLevel)
       {
-         for (x = m_windowWidth; x <= houseWidth - m_windowWidth; x += m_windowWidth * 2)
+         //Windows
+         if (detail == HighDetailLevel)
          {
-            //From bottom to top
-            for (y = houseHeight - m_windowHeight*2; y >= m_windowHeight; y -= m_windowHeight * 2)
+            for (x = m_windowWidth; x <= houseWidth - m_windowWidth; x += m_windowWidth * 2)
             {
-               DrawFrontWallRect(dc, m_windowCol, x, y, m_windowWidth, m_windowHeight);
+               //From bottom to top
+               for (y = houseHeight - m_windowHeight * 2; y >= m_windowHeight; y -= m_windowHeight * 2)
+               {
+                  DrawFrontWallRect(dc, m_windowCol, x, y, m_windowWidth, m_windowHeight);
+               }
             }
          }
       }

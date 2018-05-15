@@ -118,6 +118,7 @@ public:
 //////////////////////////////////////////////////////////////////////////
 typedef std::vector<WorldObject*> WorldObjectRow;
 
+
 class  City
 {
 public:
@@ -138,7 +139,7 @@ public:
 
    double GetCityDepth() const { return m_cellCount *m_cellDepth; }
    void CopyFrom(City &other);
-   void Init(CRect & rc, double z, int rowCount, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
+   void Init(CRect & rc, double z, int rowCount, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors, HouseStyle style);
    void PrepareDraw(World & world, double cameraZPos, double cameraCutOff);
    
 #ifndef MOVE_CAMERA
@@ -154,7 +155,7 @@ protected:
    inline void PrepareDraw(World & world, WorldObject*, double cameraZPos, double cameraCutOff);
    void MoveObjects(std::vector<WorldObject*> &row, double dz);
    void CopyRow(std::vector<WorldObject*> &row, std::vector<WorldObject*> &rowFrom);
-   void CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent);
+   void CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int housePercent, HouseStyle style);
    void DestroyRow(std::vector<WorldObject*> &row);
    void InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber);
 

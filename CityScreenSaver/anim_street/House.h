@@ -6,9 +6,18 @@
 #include <vector>
 
 
+enum HouseStyle
+{
+   CountryHouse,
+   SkyScraper,
+   OldTown
+};
+
+
 class House : public WorldObject
 {
 public:
+   HouseStyle m_style;
    COLORREF m_frontCol;
    COLORREF m_sideCol;
    COLORREF m_windowCol;
@@ -22,7 +31,7 @@ public:
    static double WINDOW_WIDTH;
 
 public:
-   House();
+   House(HouseStyle style);
    House(House & other);
    House(POINT3D &pos, SIZE3D &size);
    House(int x, int y, int z, int w, int h, int d);

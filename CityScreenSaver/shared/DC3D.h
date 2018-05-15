@@ -77,6 +77,7 @@ class CDC3D : public CDC
 public:
    
 protected:
+   int   m_polygonCount;
    CRect m_screen;
    double m_cy;      //screen x center
    double m_cx;      //screen y center
@@ -94,6 +95,7 @@ protected:
 public:
    CDC3D(RECT* pScreen, double z_camera, double planeWidth, double planeHeight, double cx_percent, double cy_percent);
    virtual ~CDC3D();
+   int GetPolyCount() const { return m_polygonCount; }
    inline int ProjectionX(double x, double z); //projection of x coord, 
    inline int ProjectionY(double y, double z); //projection of y coord
    int HorizonX(); //projection of x coord, 

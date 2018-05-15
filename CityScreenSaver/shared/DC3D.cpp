@@ -6,6 +6,7 @@
 // 0 <= cy_percent <= 100
 CDC3D::CDC3D(RECT* pScreen, double z_camera, double planeWidth, double planeHeight, double cx_percent, double cy_percent)
    : m_detailOptimization(false)
+   , m_polygonCount(0)
 {
    m_screen = *pScreen;
    //m_cy = planeWidth / 2;
@@ -223,6 +224,7 @@ bool CDC3D::IsPolygonFaceVisible(const POINT3D * lpPoints, int nCount, PolygonFa
 
 BOOL CDC3D::Polygon(const POINT3D * lpPoints, int nCount, PolygonFace direction /*= Any*/)
 {
+   m_polygonCount++;
    BOOL res = FALSE;
    if (IsPolygonFaceVisible(lpPoints, nCount, direction))
    {
