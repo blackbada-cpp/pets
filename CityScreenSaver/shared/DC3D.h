@@ -75,7 +75,19 @@ enum DetailLevel
 class CDC3D : public CDC
 {
 public:
-   
+   //Face normal vector
+   enum PolygonFace
+   {
+      FaceAny,
+      FaceToRight,
+      FaceToLeft,
+      FaceToTop,
+      FaceToBottom,
+      FaceToFront,
+      FaceToBack,
+   };
+
+
 protected:
    int   m_polygonCount;
    CRect m_screen;
@@ -114,19 +126,8 @@ public:
    void DrawBitmapObject(CBitmap & mask, CBitmap & bitmap, double x, double y, double width, double height, double z);
    void DrawBitmapObject(CBitmapObject & obj, double x, double y, double width, double height, double z); 
 
-   //Sort of normal
-   enum PolygonFace
-   {
-      FaceAny,
-      FaceToRight,
-      FaceToLeft,
-      FaceToTop,
-      FaceToBottom,
-      FaceToFront,
-      FaceToBack,
-   };
-
-   BOOL Polygon(const POINT3D * lpPoints, int nCount, PolygonFace direction = FaceAny);
+   BOOL Polygon(const POINT3D * lpPoints, int nCount, PolygonFace direction = FaceAny); //Polygone on some surface
+   BOOL Polyline(const POINT3D * lpPoints, int nCount, PolygonFace direction = FaceAny); //Polyline on some surface
    bool IsPolygonFaceVisible(const POINT3D * lpPoints, int nCount, PolygonFace direction);
 };
 

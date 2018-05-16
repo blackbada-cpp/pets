@@ -142,12 +142,6 @@ public:
    void Init(CRect & rc, double z, int rowCount, int cellCount, double cellDepth, double groundHeight, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors, HouseStyle style);
    void PrepareDraw(World & world, double cameraZPos, double cameraCutOff);
    
-#ifndef MOVE_CAMERA
-   //Move city with camera flip
-   void MoveObjects(std::vector<WorldObject*> &row, double dz, double z_houseStep, double z_camera);
-   void MoveObjects(double dz, double z_houseStep, double z_camera);
-#endif
-
    //Move city
    void MoveObjects(double dz);
 

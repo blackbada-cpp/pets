@@ -278,6 +278,56 @@ BOOL CDC3D::Polygon(const POINT3D * lpPoints, int nCount, PolygonFace direction 
    return res;
 }
 
+
+BOOL CDC3D::Polyline(const POINT3D * lpPoints, int nCount, PolygonFace direction /*= FaceAny*/)
+{
+   //m_polygonCount++;
+   BOOL res = FALSE;
+   if (IsPolygonFaceVisible(lpPoints, nCount, direction))
+   {
+      //--- >8 --- Allocate point array --- >8 ---
+      static POINT st_points[32];
+      POINT * projPoints = NULL;
+      if (nCount > sizeof(st_points) / sizeof(st_points[0]))
+      {
+         projPoints = new POINT[nCount];
+      }
+      else
+      {
+         projPoints = st_points;
+      }
+      //--- >8 ---------------------------- >8 ---
+
+
+      bool skip = false;
+      for (int i = 0; i < nCount && !skip; i++)
+      {
+         //if (lpPoints[i].z < 0)
+         //   skip = true;
+
+         projPoints[i].x = ProjectionX(lpPoints[i].x, lpPoints[i].z);
+         projPoints[i].y = ProjectionY(lpPoints[i].y, lpPoints[i].z);
+      }
+      if (!skip)
+      {
+         if (projPoints[0].x == projPoints[1].x && projPoints[0].y == projPoints[1].y)
+         {
+            projPoints[0].x--;
+            //projPoints[1].y--;
+         }
+         res = CDC::Polyline(projPoints, nCount);
+      }
+
+      //--- >8 --- Deallocate point array --- >8 ---
+      if (projPoints != st_points)
+      {
+         delete[] projPoints;
+      }
+      //--- >8 ------------------------------ >8 ---
+   }
+   return res;
+}
+
 void CDC3D::DrawBitmapObject(CBitmap & mask, CBitmap & bitmap, double x, double y, double width, double height, double z)
 {
    int i;

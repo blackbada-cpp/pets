@@ -234,18 +234,28 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    House::WINDOW_HEIGHT = House::GetWindowHeight(&rc);
    House::WINDOW_WIDTH = House::GetWindowWidth(&rc);
 
-   m_regions.push_back(new City);
-   m_regions.push_back(new City);
-   m_regions.push_back(new City);
-   m_regions.push_back(new City);
-   m_regions.push_back(new City);
-   m_regions.push_back(new City);
-   m_regions[0]->Init(rc, 0              /*z*/, 2,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, m_front1, m_side1, OldTown);
-   m_regions[1]->Init(rc, CITY_DEPTH * 1 /*z*/, 0,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, OldTown); //Countyside
-   m_regions[2]->Init(rc, CITY_DEPTH * 2 /*z*/, 10, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 30, m_front2, m_side2, SkyScraper);
-   m_regions[3]->Init(rc, CITY_DEPTH * 3 /*z*/, 0,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, SkyScraper); //Countyside
-   m_regions[4]->Init(rc, CITY_DEPTH * 4 /*z*/, 1,  HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3, CountryHouse);
-   m_regions[5]->Init(rc, CITY_DEPTH * 5 /*z*/, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, CountryHouse);
+   m_regions.push_back(new City);//[0] city 1
+   m_regions.push_back(new City);//[1] countryside
+   m_regions.push_back(new City);//[2] city 2
+   m_regions.push_back(new City);//[3] countryside
+   m_regions.push_back(new City);//[4] city 3
+   m_regions.push_back(new City);//[5] countryside
+   m_regions.push_back(new City);//[6] copy of city 1
+   
+   double cityDepth = 0;
+   auto itCity = m_regions.begin();
+   (*itCity)->Init(rc, cityDepth /*z*/, 10, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 30, m_front2, m_side2, style_SkyScraper); 
+   cityDepth += CITY_DEPTH; itCity++;
+   (*itCity)->Init(rc, cityDepth /*z*/, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, style_SkyScraper); //Countyside
+   cityDepth += CITY_DEPTH; itCity++;
+   (*itCity)->Init(rc, cityDepth /*z*/, 2, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 4, m_front1, m_side1, style_OldTown);
+   cityDepth += CITY_DEPTH; itCity++;
+   (*itCity)->Init(rc, cityDepth /*z*/, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, style_OldTown); //Countyside
+   cityDepth += CITY_DEPTH; itCity++;
+   (*itCity)->Init(rc, cityDepth /*z*/, 1, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 2, m_front3, m_side3, style_CountryHouse);
+   cityDepth += CITY_DEPTH; itCity++;
+   (*itCity)->Init(rc, cityDepth /*z*/, 0, HOUSE_COUNT, m_cellDepth, ::GetGroundHeight(&rc), 0, m_front3, m_side3, style_OldTown); //Countyside
+   cityDepth += CITY_DEPTH; itCity++;
 
    //Duplicate 1st city
    double totalDepth = 0.0;
@@ -254,8 +264,9 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
       City * city = *it;
       totalDepth += city->GetCityDepth();
    }
-   m_regions[3]->CopyFrom(*m_regions[0]);
-   m_regions[3]->MoveObjects(totalDepth);
+   assert(cityDepth == totalDepth);
+   m_regions.back()->CopyFrom(*m_regions.front());
+   m_regions.back()->MoveObjects(totalDepth);
    
 #ifdef MOVE_CAMERA
    m_worldWrapDepth = totalDepth;
@@ -562,7 +573,13 @@ void City::CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int h
          if (pHouse <= housePercent)
          {
             //*it = new House();
-            row[i] = new House(style);
+            switch (style)
+            {
+            case style_CountryHouse: row[i] = new OldCityHouse(); break;
+            case style_OldTown:      row[i] = new OldCityHouse(); break;
+            case style_SkyScraper:   row[i] = new SkyScraper(); break;
+            }
+            
          }
          else 
          {
@@ -654,39 +671,6 @@ void City::PrepareDraw(World & world, double cameraZPos, double cameraCutOff)
    }
 }
 
-#ifndef MOVE_CAMERA
-void City::MoveObjects(std::vector<WorldObject*> &row, double dz, double z_houseStep, double z_camera)
-{
-   for (auto it = row.begin(); it != row.end(); ++it)
-   {
-      WorldObject* obj = *it;
-      if (obj)
-      {
-         obj->m_pos.z -= dz;
-         
-         //flip objects backwards to allow endless camera moving
-         if (obj->m_pos.z < z_camera - z_houseStep)
-         {
-            obj->m_pos.z += z_houseStep * m_cellCount;
-         }
-      }
-   }
-}
-#endif
-
-#ifndef MOVE_CAMERA
-void City::MoveObjects(double dz, double z_houseStep, double z_camera)
-{
-   MoveObjects(m_balls,     dz, z_houseStep, z_camera);
-   MoveObjects(m_rightRow1, dz, z_houseStep, z_camera);
-   MoveObjects(m_rightRow2, dz, z_houseStep, z_camera);
-   MoveObjects(m_rightRow3, dz, z_houseStep, z_camera);
-   MoveObjects(m_leftRow1,  dz, z_houseStep, z_camera);
-   MoveObjects(m_leftRow2,  dz, z_houseStep, z_camera);
-   MoveObjects(m_leftRow3,  dz, z_houseStep, z_camera);
-}
-#endif
-
 void City::MoveObjects(std::vector<WorldObject*> &row, double dz)
 {
    for (auto it = row.begin(); it != row.end(); ++it)
@@ -702,7 +686,7 @@ void City::MoveObjects(std::vector<WorldObject*> &row, double dz)
 void City::MoveObjects(double dz)
 {
    m_pos.z += dz;
-   m_road.m_pos.z + -dz;
+   m_road.m_pos.z += dz;
    MoveObjects(m_objects, dz);
    for (auto it = m_rows.begin(); it != m_rows.end(); ++it)
    {
