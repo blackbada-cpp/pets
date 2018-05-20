@@ -333,14 +333,23 @@ void House::GenerateColor(std::vector<COLORREF> & frontColors, std::vector<COLOR
 
 void House::GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
 {
-   //double h = RangedRand(houseHeight / 2, houseHeight * 2);
-   //double h = RangedRandInt(1, MAX_FLOOR_NUMBER)*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT;
-   double h = RangedRand(WINDOW_HEIGHT * 3, maxFloorNumber*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT);
+   //V1 Random size
+   //double h = RangedRand(WINDOW_HEIGHT * 3, maxFloorNumber*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT);
+   //double w = RangedRand(WINDOW_WIDTH * 4, MAX_HOUSE_WIDTH);
+   //double d = RangedRand(WINDOW_WIDTH * 4, MAX_HOUSE_WIDTH);
    
-   //TODO: random # of windows, not random width
-   //TODO: rectangular houses, having 2 windows at the end
-   double w = RangedRand(WINDOW_WIDTH*4, MAX_HOUSE_WIDTH);
-   double d = RangedRand(WINDOW_WIDTH*4, MAX_HOUSE_WIDTH);
+   //V2 Random # of floors
+   int floorNumber = RangedRandInt(1, maxFloorNumber);
+   double h = floorNumber*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT;
+
+   //V2 Random # of windows
+   int orientation = RangedRandInt(0, 1);
+   int windowsNumber1 = RangedRandInt(2, 3);
+   int windowsNumber2 = RangedRandInt(3, 6);
+   double size1 = windowsNumber1*WINDOW_WIDTH * 2 + WINDOW_WIDTH;
+   double size2 = windowsNumber2*WINDOW_WIDTH * 2 + WINDOW_WIDTH;
+   double w = orientation ? size1 : size2;
+   double d = orientation ? size2 : size1;
 
    double xShift = RangedRand(0, cellWidth - w);
    double zShift = RangedRand(0, cellDepth - d);
