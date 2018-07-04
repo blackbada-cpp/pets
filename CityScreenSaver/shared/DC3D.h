@@ -26,6 +26,10 @@ struct POINT3D {
       y = (double)_y;
       z = (double)_z;
    }
+
+   void MoveX(double dx) { x += dx; }
+   void MoveY(double dy) { y += dy; }
+   void MoveZ(double dz) { z += dz; }
 };
 
 struct SIZE3D {
@@ -115,6 +119,8 @@ public:
    double GetEyeZ() { return m_z_camera - m_focus + 0.1;  }
    void        InitDetailization(double mediumDetailDepth, double lowDetailDepth);
    DetailLevel GetDetailizationLevel(double z); //projection of y coord
+   
+   bool IsPolygonFaceVisible(const POINT3D * lpPoints, int nCount, PolygonFace direction);
 
    void MoveTo(double x, double y, double z);
    void MoveTo(POINT3D &p);
@@ -128,7 +134,9 @@ public:
 
    BOOL Polygon(const POINT3D * lpPoints, int nCount, PolygonFace direction = FaceAny); //Polygone on some surface
    BOOL Polyline(const POINT3D * lpPoints, int nCount, PolygonFace direction = FaceAny); //Polyline on some surface
-   bool IsPolygonFaceVisible(const POINT3D * lpPoints, int nCount, PolygonFace direction);
+
+   BOOL Ellipse(POINT3D &p1, int w, int h);
+
 };
 
 #endif // DC3D_h__

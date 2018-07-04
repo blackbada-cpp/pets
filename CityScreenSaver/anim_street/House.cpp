@@ -96,6 +96,17 @@ LONG House::GetWindowHeight(RECT* prc)
    //TODO: return GetHouseHeight(prc) / 7;
 }
 
+LONG House::GetPlantWidth(RECT* prc)
+{
+   return GetMaxHouseWidth(prc) / 6;
+}
+
+LONG House::GetPlantHeight(RECT* prc)
+{
+   return (prc->bottom - prc->top) / 2;
+}
+
+
 void House::DrawRoof(CDC3D & dc, COLORREF frontCol, int x, int z, int width, int depth)
 {
    CPen     pen;   pen.CreatePen(PS_SOLID, 1, frontCol);
@@ -331,7 +342,7 @@ void House::GenerateColor(std::vector<COLORREF> & frontColors, std::vector<COLOR
    SetColor(frontCol, sideCol);
 }
 
-void House::GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
+void House::Generate(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors)
 {
    //V1 Random size
    //double h = RangedRand(WINDOW_HEIGHT * 3, maxFloorNumber*WINDOW_HEIGHT * 2 + WINDOW_HEIGHT);

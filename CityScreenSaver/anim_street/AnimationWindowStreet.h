@@ -66,6 +66,13 @@
 #define COLOR_WINDOW_4 RGB(85, 147, 48)
 #define COLOR_WINDOW_5 RGB(2, 119, 98)
 
+//http://www.colourlovers.com/palette/122168/Fuji_Apple
+#define COLOR_FUJI_RED      RGB(191,42,35)
+#define COLOR_FUJI_GREEN    RGB(166,173,60)
+#define COLOR_FUJI_GOLD     RGB(240,206,78)
+#define COLOR_FUJI_OCHRE    RGB(207,135,46)
+#define COLOR_FUJI_DEEP_RED RGB(138,33,29)
+
 
 #define MOVE_CAMERA
 

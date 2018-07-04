@@ -40,7 +40,7 @@ public:
    ~House();
    //virtual WorldObject * Clone();
    
-   void GenerateHouse(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
+   void Generate(int cellXPos, int cellZPos, double groundHeight, double cellWidth, double cellDepth, int maxFloorNumber, std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
    void SetColor(COLORREF frontCol, COLORREF sideCol);
    virtual void DoDraw(CDC3D & dc);
 
@@ -48,6 +48,8 @@ public:
    static LONG GetMaxHouseHeight(RECT* prc);
    static LONG GetWindowWidth(RECT* prc);
    static LONG GetWindowHeight(RECT* prc);
+   static LONG GetPlantWidth(RECT* prc);
+   static LONG GetPlantHeight(RECT* prc);
    void GenerateColor(std::vector<COLORREF> & frontColors, std::vector<COLORREF> & sideColors);
 
    void DrawRoof(CDC3D & dc, COLORREF frontCol, int x, int z, int width, int depth);

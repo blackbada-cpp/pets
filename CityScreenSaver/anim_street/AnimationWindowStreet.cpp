@@ -9,6 +9,7 @@
 #include "DC3D.h"
 #include "World.h"
 #include "House.h"
+#include "Plants.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -233,6 +234,8 @@ int CAnimationWindowStreet::OnCreate(LPCREATESTRUCT cs)
    House::MAX_HOUSE_WIDTH = House::GetMaxHouseWidth(&rc);
    House::WINDOW_HEIGHT = House::GetWindowHeight(&rc);
    House::WINDOW_WIDTH = House::GetWindowWidth(&rc);
+   Plant::PLANT_HEIGHT = House::GetPlantHeight(&rc);
+   Plant::PLANT_WIDTH = House::GetPlantWidth(&rc);
 
    m_regions.push_back(new City);//[0] city 1
    m_regions.push_back(new City);//[1] countryside
@@ -393,12 +396,17 @@ void CAnimationWindowStreet::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
    CWnd::OnKeyDown(nChar, nRepCnt, nFlags);
    if (m_pressed == key_Nothing)
    {
-      if      (nChar == VK_LEFT)  m_pressed = key_Left;
-      else if (nChar == VK_RIGHT) m_pressed = key_Right;
-      else if (nChar == VK_UP)    m_pressed = key_Up;
-      else if (nChar == VK_DOWN)  m_pressed = key_Down;
-      else if (nChar == VK_ADD)      m_pressed = key_Plus;
-      else if (nChar == VK_SUBTRACT)      m_pressed = key_Minus;
+      switch (nChar)
+      {
+      case VK_LEFT:     m_pressed = key_Left;  break;
+      case VK_RIGHT:    m_pressed = key_Right; break;
+      case VK_UP:       m_pressed = key_Up;    break;
+      case VK_DOWN:     m_pressed = key_Down;  break;
+      case VK_OEM_PLUS:
+      case VK_ADD:      m_pressed = key_Plus;  break;
+      case VK_OEM_MINUS:
+      case VK_SUBTRACT: m_pressed = key_Minus; break;
+      }
    }
 }
 
@@ -589,6 +597,10 @@ void City::CreateRow(std::vector<WorldObject*> &row, int iStart, int iEnd, int h
                //*it = new Ball();
                row[i] = new Ball();
             }
+            else
+            {
+               row[i] = new Plant();
+            }
          }
       }
    }
@@ -603,7 +615,7 @@ void City::InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double grou
       House * house = dynamic_cast<House*>(obj);
       if (house)
       {
-         house->GenerateHouse(cellXPos, cellZPos, groundHeight, cellWidth, cellDepth, maxFloorNumber, *m_frontColors, *m_sideColors);
+         house->Generate(cellXPos, cellZPos, groundHeight, cellWidth, cellDepth, maxFloorNumber, *m_frontColors, *m_sideColors);
       }
       else
       {
@@ -612,6 +624,16 @@ void City::InitCellRow(std::vector<WorldObject*> &row, int cellXPos, double grou
          {
             ball->GenerateBall(cellXPos, cellZPos, groundHeight, cellWidth, cellDepth);
          }
+         else {
+            Plant * plant = dynamic_cast<Plant*>(obj);
+            if (plant)
+            {
+               plant->Generate(cellXPos, cellZPos, groundHeight, cellWidth, cellDepth);
+
+            }
+
+         }
+
       }
       cellZPos += cellDepth;
    }

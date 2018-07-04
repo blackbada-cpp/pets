@@ -389,6 +389,16 @@ void CDC3D::InitDetailization(double mediumDetailDepth, double lowDetailDepth)
    m_lowDetailDepth = lowDetailDepth;
 }
 
+BOOL CDC3D::Ellipse(POINT3D &p1, int w, int h)
+{
+   int px1 = ProjectionX(p1.x, p1.z);
+   int py1 = ProjectionY(p1.y, p1.z);
+   int px2 = ProjectionX(p1.x + w, p1.z);
+   int py2 = ProjectionY(p1.y + h, p1.z);
+
+   return CDC::Ellipse(px1, py1, px2, py2);
+}
+
 //////////////////////////////////////////////////////////////////////////
 void CreateBitmapMask(CBitmap & bmMask, CBitmap &bmColour, COLORREF crTransparent)
 {
