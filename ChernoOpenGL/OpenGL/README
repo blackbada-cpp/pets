@@ -1,0 +1,30 @@
+OpenGL series from TheCherno 
+https://www.youtube.com/playlist?list=PLlrATfBNZ98foTJPJ_Ev03o2oq3-GGOS2
+
+How to setup parent folder
+------------
+
+1) create ..\OpenGL.sln solution, then add OpenGL.vcxproj 
+2) create ..\Dependencies folder 
+Download ..\Dependencies\GLEW from http://glew.sourceforge.net
+Download ..\Dependencies\GLEW from https://www.glfw.org
+3) create ..\vs2017_64.bat containing this (for running VS2017):
+@echo off
+
+rem VS120COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\Tools\
+set VS140COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\Tools\
+set VSPATH=C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build
+rem call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" x86_amd64
+call "%VSPATH%\vcvars64.bat"
+
+call "%VS140COMNTOOLS%\..\IDE\devenv" OpenGL.sln
+
+------------
+Make sense that OpenGL\vendor libraries are downloaded from the following locations.
+OpenGL\src\vendor\stb_image  - A .png loading library, from https://github.com/nothings/stb
+OpenGL\src\vendor\imgui      - A GUI library, from https://github.com/ocornut/imgui/releases
+OpenGL\src\vendor\glm        - A Math library, from https://github.com/g-truc/glm
+
+Useful links:
+http://docs.gl/gl4/glShaderSource
+https://antongerdelan.net/opengl/shaders.html
