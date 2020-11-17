@@ -1,0 +1,19 @@
+Anton's OpenGL4 tutorials
+
+
+How to setup
+------------
+
+Create Dependencies folder 
+Download Dependencies\GLEW from http://glew.sourceforge.net
+Download Dependencies\GLEW from https://www.glfw.org
+
+------------
+Make sense that OpenGL\vendor libraries are downloaded from the following locations.
+vendor\stb_image  - A .png loading library, from https://github.com/nothings/stb
+vendor\imgui      - A GUI library, from https://github.com/ocornut/imgui/releases
+vendor\glm        - A Math library, from https://github.com/g-truc/glm
+
+Useful links:
+http://docs.gl/gl4/glShaderSource
+https://antongerdelan.net/opengl/shaders.html
