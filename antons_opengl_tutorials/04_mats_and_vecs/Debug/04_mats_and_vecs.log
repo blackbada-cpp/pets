@@ -1,4 +1,0 @@
-﻿  04_mats_and_vecs.cpp
-d:\work\learnopengl\antons_opengl_tutorials\04_mats_and_vecs\src\04_mats_and_vecs.cpp(111): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-d:\work\learnopengl\antons_opengl_tutorials\04_mats_and_vecs\src\04_mats_and_vecs.cpp(114): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-  04_mats_and_vecs.vcxproj -> D:\Work\LearnOpenGL\antons_opengl_tutorials\Debug\04_mats_and_vecs.exe
