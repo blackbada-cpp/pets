@@ -54,16 +54,16 @@ int main()
    // | 0       0      1 0 |
    // | 0       0      0 1 |
    
-   // Column-major matrix seems transposed, but it's a way we iterate arrays:
-   float matrix[] = {
-      1.0f, 0.0f, 0.0f, 0.0f, //1st column #0, #1, #2, #3
-      0.0f, 1.0f, 0.0f, 0.0f, //2nd column 
-      0.0f, 0.0f, 1.0f, 0.0f, //3rd column
-      0.5f, 0.0f, 0.0f, 1.0f  //4th column, #12, #13, #14, #15
-   };
-   float matrix2[16];
-   dp::Mat4 T;
+   //dp // Column-major matrix seems transposed, but it's a way we iterate arrays:
+   //dp float matrix[] = {
+   //dp    1.0f, 0.0f, 0.0f, 0.0f, //1st column #0, #1, #2, #3
+   //dp    0.0f, 1.0f, 0.0f, 0.0f, //2nd column 
+   //dp    0.0f, 0.0f, 1.0f, 0.0f, //3rd column
+   //dp    0.5f, 0.0f, 0.0f, 1.0f  //4th column, #12, #13, #14, #15
+   //dp };
+   dp::Mat4 T, R;
    T = dp::Mat4::Translation(0.5, 0.0, 0.0);
+   R = dp::Mat4::RotationZ(0.2);
 
    GLuint points_vbo = 0;
    glGenBuffers(1, &points_vbo);
@@ -88,12 +88,11 @@ int main()
 
    int matrix_location = glGetUniformLocation(shader_program, "matrix");
    glUseProgram(shader_program);
-   memcpy(matrix2, (float*)T, sizeof(matrix2));
-   glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
-   //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, T);
+   glUniformMatrix4fv(matrix_location, 1, GL_FALSE, T.m_data);
    float speed = 0.1f; //1 unit per second
+   float rotation_speed = -0.5f; //1 unit per second
    float last_position = 0.0f;
-   float last_position2 = 0.0f;
+   float last_angle = 0.0f;
    while (!glfwWindowShouldClose(window))
    {
       //add a timer for doing animation
@@ -105,19 +104,20 @@ int main()
       //reverse direction when going to far left or right
       if (fabs(last_position) > 1.0f) {
          speed = -speed;
+         rotation_speed = -rotation_speed;
       }
 
       //update the matrix
-      matrix[12] = elapsed_seconds * speed + last_position;
-      last_position = matrix[12];
-      
       T.SetTranslation(elapsed_seconds * speed + last_position, 0.0, 0.0);
-      last_position2 = T.TranslationX();
+      R.SetRotationZ(last_angle);
+      last_position = T.TranslationX();
+      last_angle = elapsed_seconds * rotation_speed + last_angle;
+      dp::Mat4 Model = dp::Mat4::Identity() * T * R;
+      //Model = Model * T;
 
       glUseProgram(shader_program);
-      memcpy(&matrix, (float*)T, sizeof(matrix));
-      glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
-      //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, T);
+      //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, Model.m_data);
+      glUniformMatrix4fv(matrix_location, 1, GL_FALSE, Model);
 
       _update_fps_counter(window);
       glClearColor(0.1f, 0.1f, 0.2f, 1.0f);

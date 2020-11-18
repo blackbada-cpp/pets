@@ -157,11 +157,19 @@ namespace dp
          return res; //copy
       }
 
-      static Mat4 Identity()
+   private:
+      static Mat4 GetIdentity()
       {
          Mat4 res;
          for (int i = 0; i < ROW_SIZE; i++)
             res.Element(i, i) = 1.0;
+         return res;
+      }
+
+   public:
+      static Mat4 Identity()
+      {
+         static Mat4 res = GetIdentity();
          return res;
       }
 
@@ -184,6 +192,30 @@ namespace dp
       }
 
       //////////////////////////////////////////////////////////////////////////
+      void SetRotationX(float angle);
+      void SetRotationY(float angle);
+      void SetRotationZ(float angle);
+      static Mat4 RotationX(float angle)
+      {
+         Mat4 res;
+         res = Identity();
+         res.SetRotationX(angle);
+         return res;
+      }
+      static Mat4 RotationY(float angle)
+      {
+         Mat4 res;
+         res = Identity();
+         res.SetRotationY(angle);
+         return res;
+      }
+      static Mat4 RotationZ(float angle)
+      {
+         Mat4 res;
+         res = Identity();
+         res.SetRotationZ(angle);
+         return res;
+      }
    };
 
 }
