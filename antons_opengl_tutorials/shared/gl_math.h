@@ -174,6 +174,11 @@ namespace dp
       }
 
       //////////////////////////////////////////////////////////////////////////
+      // Translation column-major matrix:
+      // | 1 0 0 Tx |
+      // | 0 1 0 Ty |
+      // | 0 0 1 Tz |
+      // | 0 0 0 1  |
       void SetTranslation(float x, float y, float z)
       {
          TranslationX() = x;
@@ -183,6 +188,9 @@ namespace dp
       inline float & TranslationX() { return Element(0, 3); }
       inline float & TranslationY() { return Element(1, 3); }
       inline float & TranslationZ() { return Element(2, 3); }
+      inline const float & TranslationX() const { return Element(0, 3); }
+      inline const float & TranslationY() const { return Element(1, 3); }
+      inline const float & TranslationZ() const { return Element(2, 3); }
       static Mat4 Translation(float x, float y, float z)
       {
          Mat4 res;
@@ -216,6 +224,33 @@ namespace dp
          res.SetRotationZ(angle);
          return res;
       }
-   };
 
-}
+      //////////////////////////////////////////////////////////////////////////
+      // Scale column-major matrix:
+      // | Sx 0  0  0 |
+      // | 0  Sy 0  0 |
+      // | 0  0  Sz 0 |
+      // | 0  0  0  1 |
+      void SetScale(float x, float y, float z)
+      {
+         ScaleX() = x;
+         ScaleY() = y;
+         ScaleZ() = z;
+      }
+      inline float & ScaleX() { return Element(0, 0); }
+      inline float & ScaleY() { return Element(1, 1); }
+      inline float & ScaleZ() { return Element(2, 2); }
+      inline const float & ScaleX() const { return Element(0, 0); }
+      inline const float & ScaleY() const { return Element(1, 1); }
+      inline const float & ScaleZ() const { return Element(2, 2); }
+      static Mat4 Scale(float x, float y, float z)
+      {
+         static Mat4 res;
+         res = Identity();
+         res.SetScale(x, y, z);
+         return res; //copy
+      }
+
+   }; //Mat4
+
+} //dp
