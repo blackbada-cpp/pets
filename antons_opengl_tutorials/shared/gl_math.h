@@ -3,9 +3,66 @@
 
 namespace dp
 {
+#define VEC3_SIZE (3)
 #define ROW_SIZE (4)
 #define COL_SIZE (4)
 
+   // Ñolumn-major vector with 3 items
+   // | #0 |
+   // | #1 |
+   // | #2 |
+   class Vec3
+   {
+   public:
+      float m_data[VEC3_SIZE];
+      Vec3()
+      {
+         Clear();
+      }
+      Vec3(float x, float y, float z)
+      {
+         m_data[0] = x;
+         m_data[1] = y;
+         m_data[2] = z;
+      }
+      inline float & X() { return m_data[0]; }
+      inline float & Y() { return m_data[1]; }
+      inline float & Z() { return m_data[2]; }
+      inline const float & X() const { return m_data[0]; }
+      inline const float & Y() const { return m_data[1]; }
+      inline const float & Z() const { return m_data[2]; }
+      Vec3(const Vec3 & other)
+      {
+         for (int i = 0; i < Count(); i++)
+            m_data[i] = other.m_data[i];
+      }
+      Vec3 & operator = (const Vec3 & other)
+      {
+         for (int i = 0; i < Count(); i++)
+            m_data[i] = other.m_data[i];
+
+         return *this;
+      }
+      inline int Count() { return VEC3_SIZE; }
+      const float & Element(int row) const
+      {
+         // row = 0..2
+         assert(row >= 0 && row < VEC3_SIZE);
+         return m_data[row];
+      }
+      float & Element(int row)
+      {
+         assert(row >= 0 && row < VEC3_SIZE);
+         return m_data[row];
+      }
+      void Clear()
+      {
+         for (int i = 0; i < Count(); i++)
+            m_data[i] = 0;
+      }
+
+   }; //Vec3
+   
    // Ñolumn-major vector with 4 items, represented as one vertical column
    // | #0 |
    // | #1 |
@@ -19,6 +76,22 @@ namespace dp
       {
          Clear();
       }
+      Vec4(float x, float y, float z, float w)
+      {
+         m_data[0] = x;
+         m_data[1] = y;
+         m_data[2] = z;
+         m_data[3] = w;
+      }
+      inline float & X() { return m_data[0]; }
+      inline float & Y() { return m_data[1]; }
+      inline float & Z() { return m_data[2]; }
+      inline float & W() { return m_data[3]; }
+      inline const float & X() const { return m_data[0]; }
+      inline const float & Y() const { return m_data[1]; }
+      inline const float & Z() const { return m_data[2]; }
+      inline const float & W() const { return m_data[3]; }
+
       Vec4(const Vec4 & other)
       {
          for (int i = 0; i < Count(); i++)
@@ -34,7 +107,7 @@ namespace dp
       inline int Count() { return COL_SIZE; }
       const float & Element(int row) const
       {
-         // row = 0..3, col=0..3
+         // row = 0..3
          assert(row >= 0 && row < COL_SIZE);
          return m_data[row];
       }
@@ -48,7 +121,7 @@ namespace dp
          for (int i = 0; i < Count(); i++)
             m_data[i] = 0;
       }
-   };
+   }; //Vec4
 
 
    // Column-major matrix with 16 items indexed this way:
@@ -249,6 +322,56 @@ namespace dp
          res = Identity();
          res.SetScale(x, y, z);
          return res; //copy
+      }
+
+      //////////////////////////////////////////////////////////////////////////
+      // Column-major View Matrix
+      // |  Rx  Ry  Rx -Px |
+      // |  Ux  Uy  Uz -Py |
+      // | -Fx -Fy -Fz -Pz |
+      // |  0   0   0   1  |
+      // Where U - is a unit vector pointing up-wards, 
+      //       F - unit vector pointing forwards, 
+      //       R - unit vector pointing right, 
+      //   and P - is the position of the camera, all in world coordinates. 
+      // The U vector must change as the camera pitches forwards and back, or rolls to either side.
+      static Mat4 View(Vec3 Upward, Vec3 Forward, Vec3 Right, Vec3 Pos)
+      {
+         static Mat4 res;
+         res = Identity();
+         res.SetViewUpwardVector(Upward);
+         res.SetViewForwardVector(Forward);
+         res.SetViewRightVector(Right);
+         res.SetViewPosition(Pos);
+         return res;
+      }
+      void SetViewUpwardVector(Vec3 Upward) { SetViewUpwardVector(Upward.X(), Upward.Y(), Upward.Z()); }
+      void SetViewUpwardVector(float x, float y, float z)
+      {
+         Element(1, 0) = x;
+         Element(1, 0) = y;
+         Element(1, 0) = z;
+      }
+      inline void SetViewForwardVector(Vec3 Forward) { SetViewForwardVector(Forward.X(), Forward.Y(), Forward.Z()); }
+      void SetViewForwardVector(float x, float y, float z)
+      {
+         Element(2, 0) = -x;
+         Element(2, 1) = -y;
+         Element(2, 2) = -z;
+      }
+      inline void SetViewRightVector(Vec3 Right) { SetViewRightVector(Right.X(), Right.Y(), Right.Z()); }
+      void SetViewRightVector(float x, float y, float z)
+      {
+         Element(0, 0) = x;
+         Element(0, 1) = y;
+         Element(0, 2) = z;
+      }
+      inline void SetViewPosition(Vec3 Pos) { SetViewPosition(Pos.X(), Pos.Y(), Pos.Z()); }
+      void SetViewPosition(float x, float y, float z)
+      {
+         Element(0, 3) = x;
+         Element(1, 3) = y;
+         Element(2, 3) = z;
       }
 
    }; //Mat4
