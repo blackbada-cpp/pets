@@ -43,7 +43,75 @@ namespace dp
 
          return *this;
       }
-      inline int Count() { return VEC3_SIZE; }
+      
+      //Add vectors
+      Vec3 operator+ (const Vec3 & other) const
+      {
+         Vec3 res;
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = Element(i) + other.Element(i);
+
+         return res;
+      }
+      
+      //Subtract vectors
+      Vec3 operator- (const Vec3 & other) const
+      {
+         Vec3 res;
+
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = Element(i) - other.Element(i);
+
+         return res;
+      }
+
+      Vec3 operator-() const
+      {
+         Vec3 res;
+
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = -Element(i);
+
+         return res;
+      }
+
+      //Multiply by constant
+      Vec3 operator* (float c) const
+      {
+         Vec3 res;
+
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = Element(i) * c;
+
+         return res;
+      }
+      
+      //Divide by constant
+      Vec3 operator/ (float c) const
+      {
+         Vec3 res;
+
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = Element(i) / c;
+
+         return res;
+      }
+
+      //////////////////////////////////////////////////////////////////////////
+      // | a1 |   | b1 |   | a2*b3 - a3*b2 |
+      // | a2 | x | b2 | = | a3*b1 - a1*b3 |
+      // | a3 |   | b3 |   | a1*b2 - a2*b1 |
+      Vec3 CrossProduct(const Vec3 & b) const
+      {
+         float a1 = X(), a2 = Y(), a3 = Z();
+         float b1 = b.X(), b2 = b.Y(), b3 = b.Z();
+         return Vec3(a2*b3 - a3 * b2, 
+                     a3*b1 - a1 * b3, 
+                     a1*b2 - a2 * b1);
+      }
+
+      float Magnitude() const;
+      inline int Count() const { return VEC3_SIZE; }
       const float & Element(int row) const
       {
          // row = 0..2
@@ -58,7 +126,7 @@ namespace dp
       void Clear()
       {
          for (int i = 0; i < Count(); i++)
-            m_data[i] = 0;
+            m_data[i] = 0.0;
       }
 
    }; //Vec3
@@ -195,7 +263,7 @@ namespace dp
       // | e f g h |  | y |  = |ex + fy + gz + hw|
       // | i j k l |  | z |    |ix + jy + kz + lw|
       // | m n o p |  | w |    |mx + ny + oz + pw|
-      Vec4 operator *(const Vec4 & other)
+      Vec4 operator *(const Vec4 & other) const
       {
          Vec4 res;
 
@@ -210,7 +278,7 @@ namespace dp
          return res; //copy
       }
 
-      Mat4 operator *(const Mat4 & other)
+      Mat4 operator *(const Mat4 & other) const
       {
          Mat4 res;
 
@@ -240,7 +308,7 @@ namespace dp
       }
 
    public:
-      static Mat4 Identity()
+      static const Mat4 & Identity()
       {
          static Mat4 res = GetIdentity();
          return res;
@@ -266,10 +334,14 @@ namespace dp
       inline const float & TranslationZ() const { return Element(2, 3); }
       static Mat4 Translation(float x, float y, float z)
       {
-         Mat4 res;
-         res = Identity();
-         res.SetTranslation(x, y, z);
-         return res;
+         Mat4 T;
+         T = Identity();
+         T.SetTranslation(x, y, z);
+         return T;
+      }
+      static Mat4 Translation(Vec3 T)
+      {
+         return Translation(T.X(), T.Y(), T.Z());
       }
 
       //////////////////////////////////////////////////////////////////////////
@@ -278,24 +350,24 @@ namespace dp
       void SetRotationZ(float angle);
       static Mat4 RotationX(float angle)
       {
-         Mat4 res;
-         res = Identity();
-         res.SetRotationX(angle);
-         return res;
+         Mat4 Rx;
+         Rx = Identity();
+         Rx.SetRotationX(angle);
+         return Rx;
       }
       static Mat4 RotationY(float angle)
       {
-         Mat4 res;
-         res = Identity();
-         res.SetRotationY(angle);
-         return res;
+         Mat4 Ry;
+         Ry = Identity();
+         Ry.SetRotationY(angle);
+         return Ry;
       }
       static Mat4 RotationZ(float angle)
       {
-         Mat4 res;
-         res = Identity();
-         res.SetRotationZ(angle);
-         return res;
+         Mat4 Rz;
+         Rz = Identity();
+         Rz.SetRotationZ(angle);
+         return Rz;
       }
 
       //////////////////////////////////////////////////////////////////////////
@@ -318,10 +390,10 @@ namespace dp
       inline const float & ScaleZ() const { return Element(2, 2); }
       static Mat4 Scale(float x, float y, float z)
       {
-         static Mat4 res;
-         res = Identity();
-         res.SetScale(x, y, z);
-         return res; //copy
+         Mat4 S;
+         S = Identity();
+         S.SetScale(x, y, z);
+         return S; //copy
       }
 
       //////////////////////////////////////////////////////////////////////////
@@ -335,16 +407,12 @@ namespace dp
       //       R - unit vector pointing right, 
       //   and P - is the position of the camera, all in world coordinates. 
       // The U vector must change as the camera pitches forwards and back, or rolls to either side.
-      static Mat4 View(Vec3 Upward, Vec3 Forward, Vec3 Right, Vec3 Pos)
-      {
-         static Mat4 res;
-         res = Identity();
-         res.SetViewUpwardVector(Upward);
-         res.SetViewForwardVector(Forward);
-         res.SetViewRightVector(Right);
-         res.SetViewPosition(Pos);
-         return res;
-      }
+      static Mat4 View(Vec3 Upward, Vec3 Forward, Vec3 Right, Vec3 CameraPosition);
+      static Mat4 ViewRotation(Vec3 Upward, Vec3 Forward, Vec3 Right);
+
+      // Get View matrix from camera position and up vector
+      static Mat4 LookAt(Vec3 camera_position, Vec3 target_position, Vec3 up_direction);
+
       void SetViewUpwardVector(Vec3 Upward) { SetViewUpwardVector(Upward.X(), Upward.Y(), Upward.Z()); }
       void SetViewUpwardVector(float x, float y, float z)
       {
@@ -355,9 +423,9 @@ namespace dp
       inline void SetViewForwardVector(Vec3 Forward) { SetViewForwardVector(Forward.X(), Forward.Y(), Forward.Z()); }
       void SetViewForwardVector(float x, float y, float z)
       {
-         Element(2, 0) = -x;
-         Element(2, 1) = -y;
-         Element(2, 2) = -z;
+         Element(2, 0) = x;
+         Element(2, 1) = y;
+         Element(2, 2) = z;
       }
       inline void SetViewRightVector(Vec3 Right) { SetViewRightVector(Right.X(), Right.Y(), Right.Z()); }
       void SetViewRightVector(float x, float y, float z)
