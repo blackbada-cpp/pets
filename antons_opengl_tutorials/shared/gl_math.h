@@ -197,6 +197,15 @@ namespace dp
    // | #1 #5 #9   #13 |
    // | #2 #6 #10  #14 |
    // | #3 #7 #11  #15 |
+   //
+   // Notes: column-major matrix seems transposed, but it's a way we iterate arrays:
+   // float m_data[] = {
+   //    1.0f, 0.0f, 0.0f, 0.0f, //1st column {#0, #1, #2, #3,
+   //    0.0f, 1.0f, 0.0f, 0.0f, //2nd column  #4, #5, #6, #7,
+   //    0.0f, 0.0f, 1.0f, 0.0f, //3rd column  #8, #9, #10, #11,
+   //    0.5f, 0.0f, 0.0f, 1.0f  //4th column  #12, #13, #14, #15}
+   // };
+
    class Mat4
    {
    public:

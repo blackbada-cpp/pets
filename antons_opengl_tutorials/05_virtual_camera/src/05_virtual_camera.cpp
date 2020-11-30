@@ -25,31 +25,33 @@ int main()
    if (!LinkShaderProgram(shader_program))
       return -1;
 
-   float points[] = {
-      0.0f,  0.5f,  0.0f,
-      0.5f, -0.5f,  0.0f,
-      -0.5f, -0.5f,  0.0f
-   };
-   
-   float colours[] = {
-      1.0f, 0.0f,  0.0f,
-      0.0f, 1.0f,  0.0f,
-      0.0f, 0.0f,  1.0f
-   };
-   
-   // Column-major matrix:
-   // | #0 #4 #8  #12 |
-   // | #1 #5 #9  #13 |
-   // | #2 #6 #10 #14 |
-   // | #3 #7 #11 #15 |
-
-   //dp // Column-major matrix seems transposed, but it's a way we iterate arrays:
-   //dp float matrix[] = {
-   //dp    1.0f, 0.0f, 0.0f, 0.0f, //1st column #0, #1, #2, #3
-   //dp    0.0f, 1.0f, 0.0f, 0.0f, //2nd column 
-   //dp    0.0f, 0.0f, 1.0f, 0.0f, //3rd column
-   //dp    0.5f, 0.0f, 0.0f, 1.0f  //4th column, #12, #13, #14, #15
+   //dp //triangle
+   //dp float points[] = {
+   //dp    0.0f,  0.5f,  0.0f,
+   //dp    0.5f, -0.5f,  0.0f,
+   //dp    -0.5f, -0.5f,  0.0f
    //dp };
+   
+   //square
+   float points[] = {
+      -0.5f,  0.5f,  0.0f, //#1
+       0.5f, -0.5f,  0.0f, //#2
+      -0.5f, -0.5f,  0.0f, //#3
+       0.5f,  0.5f,  0.0f, //#4
+       0.5f, -0.5f,  0.0f, //#5=#2
+      -0.5f,  0.5f,  0.0f, //#6=#1
+   };
+
+   float colours[] = {
+      1.0f, 0.0f,  0.0f, //#1
+      0.0f, 1.0f,  0.0f, //#2
+      0.0f, 0.0f,  1.0f, //#3
+      1.0f, 1.0f,  1.0f, //#4
+      0.0f, 1.0f,  0.0f, //#5=#2
+      1.0f, 0.0f,  0.0f, //#6=#1
+   };
+   
+   // Column-major matrices to produce Model matrix:
    dp::Mat4 T, R, S;
    T = dp::Mat4::Translation(0.5, 0.0, 0.0);
    R = dp::Mat4::RotationZ(0.2);
@@ -58,12 +60,12 @@ int main()
    GLuint points_vbo = 0;
    glGenBuffers(1, &points_vbo);
    glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-   glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), points, GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, 2 * 3 * 3 * sizeof(float), points, GL_STATIC_DRAW); //dp 2 triangles
 
    GLuint colours_vbo = 0;
    glGenBuffers(1, &colours_vbo);
    glBindBuffer(GL_ARRAY_BUFFER, colours_vbo);
-   glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), colours, GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, 2 * 3 * 3 * sizeof(float), colours, GL_STATIC_DRAW); //dp 2 triangles
 
    GLuint vao = 0;
    glGenVertexArrays(1, &vao);
@@ -79,7 +81,7 @@ int main()
    int matrix_location = glGetUniformLocation(shader_program, "mvp");
    glUseProgram(shader_program);
    dp::Mat4 Model = dp::Mat4::Identity() * T * R * S;
-   dp::Vec3 cameraPosition(0.5, 0.0, 0.5);
+   dp::Vec3 cameraPosition(0.5, 0.0, 0.5); //(0.5, 0.5, 0.5);
    //dp dp::Mat4 View = dp::Mat4::View(dp::Vec3(0.0, 1.0, 0.0) /*Upward*/, 
    //dp                                dp::Vec3(0.0, 0.0, -1.0) /*Forward*/, 
    //dp                                dp::Vec3(1.0, 0.0, 0.0) /*Right*/, 
@@ -89,16 +91,15 @@ int main()
                                   dp::Vec3(-0.707, -0.707, -0.707) /*Forward*/,
                                   dp::Vec3(0.707, 0.707, -0.707) /*Right*/,
                                   cameraPosition);
-   dp this doesn't work:
-   dp::Mat4 View2 = dp::Mat4::LookAt(cameraPosition, 
-                                    dp::Vec3(0.0, -1.0, -1.0) /*targetPos*/, 
+   dp::Mat4 ViewLookAt = dp::Mat4::LookAt(cameraPosition, 
+                                    dp::Vec3(0.0, 0.0, 0.0)/*targetPos*/, 
                                     dp::Vec3(0.0, 1.0, 0.0)/*up_direction*/);
 
    dp::Mat4 Proj = dp::Mat4::Identity();
-   dp::Mat4 MVP = Proj * View * Model;
+   dp::Mat4 MVP = Proj * ViewLookAt * Model;
    glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
    float speed = 0.0f; // 0.1f; //1 unit per second
-   float rotation_speed = -1.0f; //1 unit per second
+   float rotation_speed = 0.0f; // -1.0f; //1 unit per second
    float last_position = 0.0f;
    float last_angle = 0.0f;
    while (!glfwWindowShouldClose(window))
@@ -125,7 +126,7 @@ int main()
 
       glUseProgram(shader_program);
       //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, Model.m_data);
-      dp::Mat4 MVP = Proj * View * Model;
+      dp::Mat4 MVP = Proj * ViewLookAt * Model;
       glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
 
       _update_fps_counter(window);
@@ -137,7 +138,7 @@ int main()
       glPolygonMode(GL_FRONT, GL_LINE);
       glUseProgram(shader_program);
       glBindVertexArray(vao);
-      glDrawArrays(GL_TRIANGLES, 0, 3);
+      glDrawArrays(GL_TRIANGLES, 0, 2 * 3); //dp 2 triangles
       //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
       //---
