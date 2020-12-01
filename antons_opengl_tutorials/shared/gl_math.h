@@ -451,6 +451,14 @@ namespace dp
          Element(2, 3) = z;
       }
 
+      //////////////////////////////////////////////////////////////////////////
+      //Column-major projection matrix
+      // | Sx 0  0  0  |
+      // | 0  Sy 0  0  |
+      // | 0  0  Sz Pz |
+      // | 0  0  -1 0  |
+      static Mat4 Projection(float screenWidth, float screenHeight);
+
    }; //Mat4
 
 } //dp

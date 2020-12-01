@@ -12,9 +12,16 @@
 #include "gl_util.h"
 #include "gl_math.h"
 
+//update any perspective matrices used here
+static dp::Mat4 gl_Proj = dp::Mat4::Identity();
+void OnUpdatePerspective(int width, int height)
+{
+   gl_Proj = dp::Mat4::Projection(width, height);
+}
+
 int main()
 {
-   GLFWwindow* window = gl_init();
+   GLFWwindow* window = gl_init(OnUpdatePerspective);
    if (!window)
       return -1;
 
@@ -81,7 +88,7 @@ int main()
    int matrix_location = glGetUniformLocation(shader_program, "mvp");
    glUseProgram(shader_program);
    dp::Mat4 Model = dp::Mat4::Identity() * T * R * S;
-   dp::Vec3 cameraPosition(0.5, 0.0, 0.5); //(0.5, 0.5, 0.5);
+   dp::Vec3 cameraPosition(-0.5, 0.0, 1.0); //(0.5, 0.5, 0.5);
    //dp dp::Mat4 View = dp::Mat4::View(dp::Vec3(0.0, 1.0, 0.0) /*Upward*/, 
    //dp                                dp::Vec3(0.0, 0.0, -1.0) /*Forward*/, 
    //dp                                dp::Vec3(1.0, 0.0, 0.0) /*Right*/, 
@@ -94,14 +101,19 @@ int main()
    dp::Mat4 ViewLookAt = dp::Mat4::LookAt(cameraPosition, 
                                     dp::Vec3(0.0, 0.0, 0.0)/*targetPos*/, 
                                     dp::Vec3(0.0, 1.0, 0.0)/*up_direction*/);
-
-   dp::Mat4 Proj = dp::Mat4::Identity();
-   dp::Mat4 MVP = Proj * ViewLookAt * Model;
+   
+   gl_Proj = dp::Mat4::Projection(g_gl_width, g_gl_height);
+   dp::Mat4 MVP = gl_Proj * ViewLookAt * Model;
    glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
-   float speed = 0.0f; // 0.1f; //1 unit per second
-   float rotation_speed = 0.0f; // -1.0f; //1 unit per second
+   float x_speed = 0.0f; // 1 unit per second
+   float rotation_speed = 1.0f; // -1.0f; //1 unit per second
+   float camera_speed = 1.0f; //1 unit per second
+   float camera_yaw_speed = 10.f; // 10 degrees per second
+
    float last_position = 0.0f;
    float last_angle = 0.0f;
+   float camera_yaw = 0.0f;
+
    while (!glfwWindowShouldClose(window))
    {
       //add a timer for doing animation
@@ -112,21 +124,31 @@ int main()
 
       //reverse direction when going to far left or right
       if (fabs(last_position) > 1.0f) {
-         speed = -speed;
+         x_speed = -x_speed;
+      }
+      if (fabs(last_angle) > 2*M_PI) {
          rotation_speed = -rotation_speed;
+      }
+      if (fabs(cameraPosition.X()) > 2.0f) {
+         camera_speed = -camera_speed;
       }
 
       //update the matrix
-      T.SetTranslation(elapsed_seconds * speed + last_position, 0.0, 0.0);
+      T.SetTranslation(elapsed_seconds * x_speed + last_position, 0.0, 0.0);
       R.SetRotationZ(last_angle);
       last_position = T.TranslationX();
       last_angle = elapsed_seconds * rotation_speed + last_angle;
+      float last_camera_x = cameraPosition.X();
+      cameraPosition.X() = elapsed_seconds * camera_speed + last_camera_x;
       Model = dp::Mat4::Identity() * T * R * S;
       //Model = Model * T;
 
       glUseProgram(shader_program);
       //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, Model.m_data);
-      dp::Mat4 MVP = Proj * ViewLookAt * Model;
+      ViewLookAt = dp::Mat4::LookAt(cameraPosition, 
+                                    dp::Vec3(0.0, 0.0, 0.0)/*targetPos*/, 
+                                    dp::Vec3(0.0, 1.0, 0.0)/*up_direction*/);
+      dp::Mat4 MVP = gl_Proj * ViewLookAt * Model;
       glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
 
       _update_fps_counter(window);

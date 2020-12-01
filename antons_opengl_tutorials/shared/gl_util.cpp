@@ -5,6 +5,12 @@
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
+#define DEFAULT_WINDOW_WIDTH (800)
+#define DEFAULT_WINDOW_HEIGHT (600)
+int g_gl_width = DEFAULT_WINDOW_WIDTH;
+int g_gl_height = DEFAULT_WINDOW_HEIGHT;
+
+
 void _update_fps_counter(GLFWwindow* window) 
 {
    static double previous_seconds = glfwGetTime();
@@ -28,8 +34,10 @@ void glfw_error_callback(int error, const char* description)
 }
 
 
-GLFWwindow* gl_init()
+static UpdatePerspectiveCalback gl_fptr = NULL;
+GLFWwindow* gl_init(UpdatePerspectiveCalback fptr)
 {
+   gl_fptr = fptr;
    // start GL context and O/S window using the GLFW helper library
    gllog::Get().Message("starting GLFW\n%s\n", glfwGetVersionString());
    // register the error call-back function that we wrote, above
@@ -52,7 +60,7 @@ GLFWwindow* gl_init()
    const GLFWvidmode* vmode = glfwGetVideoMode(mon);
    GLFWwindow* window = glfwCreateWindow(vmode->width, vmode->height, "Extended GL Init", mon, NULL);
 #else
-   GLFWwindow* window = glfwCreateWindow(800, 600, "Extended GL Init", NULL, NULL);
+   GLFWwindow* window = glfwCreateWindow(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Extended GL Init", NULL, NULL);
 #endif
    if (!window) {
       gllog::Get().Error("ERROR: could not open window with GLFW3\n");
@@ -86,13 +94,12 @@ GLFWwindow* gl_init()
 }
 
 // keep track of window size for things like the viewport and the mouse cursor
-int g_gl_width = 640;
-int g_gl_height = 480;
-
 void glfw_window_size_callback(GLFWwindow* window, int width, int height)
 {
    g_gl_width = width;
    g_gl_height = height;
 
    /* update any perspective matrices used here */
+   if (gl_fptr)
+      gl_fptr(width, height);
 }

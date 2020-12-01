@@ -5,7 +5,8 @@
 
 void _update_fps_counter(GLFWwindow* window);
 void glfw_error_callback(int error, const char* description);
-GLFWwindow* gl_init();
+typedef void(*UpdatePerspectiveCalback)(int, int);
+GLFWwindow* gl_init(UpdatePerspectiveCalback fptr = NULL);
 
 // keep track of window size for things like the viewport and the mouse cursor
 extern int g_gl_width;
