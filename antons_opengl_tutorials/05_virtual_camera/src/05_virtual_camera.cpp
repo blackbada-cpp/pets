@@ -12,11 +12,17 @@
 #include "gl_util.h"
 #include "gl_math.h"
 
-//update any perspective matrices used here
+//TODO: move all globals to engine 
+static GLuint gl_shader_program;
+static int gl_proj_location = -1;
 static dp::Mat4 gl_Proj = dp::Mat4::Identity();
+
 void OnUpdatePerspective(int width, int height)
 {
+   // update any perspective matrices used here
+   glUseProgram(gl_shader_program);
    gl_Proj = dp::Mat4::Projection(width, height);
+   glUniformMatrix4fv(gl_proj_location, 1, GL_FALSE, gl_Proj);
 }
 
 int main()
@@ -25,11 +31,11 @@ int main()
    if (!window)
       return -1;
 
-   GLuint shader_program;
-   if (!InitShaderProgram("shaders/test_vs.glsl", "shaders/test_fs.glsl", shader_program))
+   
+   if (!InitShaderProgram("shaders/test_vs.glsl", "shaders/test_fs.glsl", gl_shader_program))
       return -1;
    
-   if (!LinkShaderProgram(shader_program))
+   if (!LinkShaderProgram(gl_shader_program))
       return -1;
 
    //dp //triangle
@@ -85,8 +91,11 @@ int main()
    glEnableVertexAttribArray(0);
    glEnableVertexAttribArray(1);
 
-   int matrix_location = glGetUniformLocation(shader_program, "mvp");
-   glUseProgram(shader_program);
+   //dp int matrix_location = glGetUniformLocation(shader_program, "mvp");
+   int view_location = glGetUniformLocation(gl_shader_program, "view");
+   gl_proj_location = glGetUniformLocation(gl_shader_program, "proj");
+   int model_location = glGetUniformLocation(gl_shader_program, "model");
+   glUseProgram(gl_shader_program);
    dp::Mat4 Model = dp::Mat4::Identity() * T * R * S;
    dp::Vec3 cameraPosition(-0.5, 0.0, 1.0); //(0.5, 0.5, 0.5);
    //dp dp::Mat4 View = dp::Mat4::View(dp::Vec3(0.0, 1.0, 0.0) /*Upward*/, 
@@ -103,8 +112,11 @@ int main()
                                     dp::Vec3(0.0, 1.0, 0.0)/*up_direction*/);
    
    gl_Proj = dp::Mat4::Projection(g_gl_width, g_gl_height);
-   dp::Mat4 MVP = gl_Proj * ViewLookAt * Model;
-   glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
+   //dp dp::Mat4 MVP = gl_Proj * ViewLookAt * Model;
+   //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
+   glUniformMatrix4fv(gl_proj_location, 1, GL_FALSE, gl_Proj);
+   glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookAt);
+   glUniformMatrix4fv(model_location, 1, GL_FALSE, Model);
    float x_speed = 0.0f; // 1 unit per second
    float rotation_speed = 1.0f; // -1.0f; //1 unit per second
    float camera_speed = 1.0f; //1 unit per second
@@ -143,13 +155,16 @@ int main()
       Model = dp::Mat4::Identity() * T * R * S;
       //Model = Model * T;
 
-      glUseProgram(shader_program);
+      glUseProgram(gl_shader_program);
       //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, Model.m_data);
       ViewLookAt = dp::Mat4::LookAt(cameraPosition, 
                                     dp::Vec3(0.0, 0.0, 0.0)/*targetPos*/, 
                                     dp::Vec3(0.0, 1.0, 0.0)/*up_direction*/);
-      dp::Mat4 MVP = gl_Proj * ViewLookAt * Model;
-      glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
+      //dp dp::Mat4 MVP = gl_Proj * ViewLookAt * Model;
+      //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
+      glUniformMatrix4fv(gl_proj_location, 1, GL_FALSE, gl_Proj);
+      glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookAt);
+      glUniformMatrix4fv(model_location, 1, GL_FALSE, Model);
 
       _update_fps_counter(window);
       glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
@@ -158,7 +173,7 @@ int main()
 
       //--- todo: draw
       glPolygonMode(GL_FRONT, GL_LINE);
-      glUseProgram(shader_program);
+      glUseProgram(gl_shader_program);
       glBindVertexArray(vao);
       glDrawArrays(GL_TRIANGLES, 0, 2 * 3); //dp 2 triangles
       //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -172,7 +187,7 @@ int main()
       }
    }
 
-   glDeleteProgram(shader_program);
+   glDeleteProgram(gl_shader_program);
 
    // close GL context and any other GLFW resources
    glfwTerminate();
