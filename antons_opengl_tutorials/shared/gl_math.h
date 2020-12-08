@@ -422,6 +422,9 @@ namespace dp
       // Get View matrix from camera position and up vector
       static Mat4 LookAt(Vec3 camera_position, Vec3 target_position, Vec3 up_direction);
 
+      //GetView matrix from camera position and camera rotation
+      static Mat4 LookYaw(Vec3 cameraPosition, float camera_yaw);
+
       void SetViewUpwardVector(Vec3 Upward) { SetViewUpwardVector(Upward.X(), Upward.Y(), Upward.Z()); }
       void SetViewUpwardVector(float x, float y, float z)
       {

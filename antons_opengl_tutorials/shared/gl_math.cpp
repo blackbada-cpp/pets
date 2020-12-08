@@ -102,6 +102,14 @@ dp::Mat4 dp::Mat4::LookAt(Vec3 cameraPosition, Vec3 targetPosition, Vec3 upwardD
    return View(u, f, r, cameraPosition);
 }
 
+dp::Mat4 dp::Mat4::LookYaw(Vec3 cameraPosition, float camera_yaw)
+{
+   Mat4 T = Translation(-cameraPosition);
+   Mat4 R = RotationY(camera_yaw);
+   Mat4 viewMatrix = R * T;
+   return viewMatrix;
+}
+
 #define GRAD2RAD  (M_PI/180.0)
 #define RAD2GRAD  (180.0/M_PI)
 #define ONE_DEG_IN_RAD (2.0 * M_PI) / 360.0 // 0.01744444

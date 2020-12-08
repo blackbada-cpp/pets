@@ -97,7 +97,8 @@ int main()
    int model_location = glGetUniformLocation(gl_shader_program, "model");
    glUseProgram(gl_shader_program);
    dp::Mat4 Model = dp::Mat4::Identity() * T * R * S;
-   dp::Vec3 cameraPosition(-0.5, 0.0, 1.0); //(0.5, 0.5, 0.5);
+   //dp dp::Vec3 cameraPosition(-0.5, 0.0, 1.0); //(0.5, 0.5, 0.5);
+   dp::Vec3 cameraPosition(0.0, 0.0, 1.0); //(0.5, 0.5, 0.5);
    //dp dp::Mat4 View = dp::Mat4::View(dp::Vec3(0.0, 1.0, 0.0) /*Upward*/, 
    //dp                                dp::Vec3(0.0, 0.0, -1.0) /*Forward*/, 
    //dp                                dp::Vec3(1.0, 0.0, 0.0) /*Right*/, 
@@ -110,12 +111,14 @@ int main()
    dp::Mat4 ViewLookAt = dp::Mat4::LookAt(cameraPosition, 
                                     dp::Vec3(0.0, 0.0, 0.0)/*targetPos*/, 
                                     dp::Vec3(0.0, 1.0, 0.0)/*up_direction*/);
-   
+   float camera_yaw = 0.0f;
+   dp::Mat4 ViewLookYaw = dp::Mat4::LookYaw(cameraPosition, camera_yaw);
+
    gl_Proj = dp::Mat4::Projection(g_gl_width, g_gl_height);
-   //dp dp::Mat4 MVP = gl_Proj * ViewLookAt * Model;
-   //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
    glUniformMatrix4fv(gl_proj_location, 1, GL_FALSE, gl_Proj);
-   glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookAt);
+   //dp glUniformMatrix4fv(view_location, 1, GL_FALSE, View);
+   //dp glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookAt);
+   glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookYaw);
    glUniformMatrix4fv(model_location, 1, GL_FALSE, Model);
    float x_speed = 0.0f; // 1 unit per second
    float rotation_speed = 1.0f; // -1.0f; //1 unit per second
@@ -124,7 +127,6 @@ int main()
 
    float last_position = 0.0f;
    float last_angle = 0.0f;
-   float camera_yaw = 0.0f;
 
    while (!glfwWindowShouldClose(window))
    {
@@ -141,29 +143,31 @@ int main()
       if (fabs(last_angle) > 2*M_PI) {
          rotation_speed = -rotation_speed;
       }
-      if (fabs(cameraPosition.X()) > 2.0f) {
-         camera_speed = -camera_speed;
-      }
+      //dp camera animation
+      //dp if (fabs(cameraPosition.X()) > 2.0f) {
+      //dp    camera_speed = -camera_speed;
+      //dp }
 
-      //update the matrix
+      //model animation
       T.SetTranslation(elapsed_seconds * x_speed + last_position, 0.0, 0.0);
       R.SetRotationZ(last_angle);
       last_position = T.TranslationX();
       last_angle = elapsed_seconds * rotation_speed + last_angle;
-      float last_camera_x = cameraPosition.X();
-      cameraPosition.X() = elapsed_seconds * camera_speed + last_camera_x;
+      
+      //dp camera animation
+      //dp float last_camera_x = cameraPosition.X();
+      //dp cameraPosition.X() = elapsed_seconds * camera_speed + last_camera_x;
+      
       Model = dp::Mat4::Identity() * T * R * S;
-      //Model = Model * T;
 
       glUseProgram(gl_shader_program);
       //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, Model.m_data);
-      ViewLookAt = dp::Mat4::LookAt(cameraPosition, 
-                                    dp::Vec3(0.0, 0.0, 0.0)/*targetPos*/, 
-                                    dp::Vec3(0.0, 1.0, 0.0)/*up_direction*/);
-      //dp dp::Mat4 MVP = gl_Proj * ViewLookAt * Model;
-      //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, MVP);
-      glUniformMatrix4fv(gl_proj_location, 1, GL_FALSE, gl_Proj);
-      glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookAt);
+      //dp ViewLookAt = dp::Mat4::LookAt(cameraPosition, 
+      //dp                               dp::Vec3(0.0, 0.0, 0.0)/*targetPos*/, 
+      //dp                               dp::Vec3(0.0, 1.0, 0.0)/*up_direction*/);
+      
+      //dp camera animation
+      //dp glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookAt); 
       glUniformMatrix4fv(model_location, 1, GL_FALSE, Model);
 
       _update_fps_counter(window);
@@ -172,7 +176,8 @@ int main()
       glViewport(0, 0, g_gl_width, g_gl_height);
 
       //--- todo: draw
-      glPolygonMode(GL_FRONT, GL_LINE);
+      //dp glPolygonMode(GL_FRONT, GL_LINE);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //both faces
       glUseProgram(gl_shader_program);
       glBindVertexArray(vao);
       glDrawArrays(GL_TRIANGLES, 0, 2 * 3); //dp 2 triangles
@@ -182,9 +187,51 @@ int main()
       glfwPollEvents();
       glfwSwapBuffers(window);
 
+      //control keys
+      bool cam_moved = false;
       if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-         glfwSetWindowShouldClose(window, 1);
+         glfwSetWindowShouldClose(window, 1); //exit
       }
+      //camera move
+      if (glfwGetKey(window, GLFW_KEY_A)) {
+         cameraPosition.X() -= camera_speed * elapsed_seconds; //move left
+         cam_moved = true;
+      }
+      if (glfwGetKey(window, GLFW_KEY_D)) {
+         cameraPosition.X() += camera_speed * elapsed_seconds; //move right
+         cam_moved = true;
+      }
+      if (glfwGetKey(window, GLFW_KEY_PAGE_UP)) {
+         cameraPosition.Y() += camera_speed * elapsed_seconds; //move up
+         cam_moved = true;
+      }
+      if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN)) {
+         cameraPosition.Y() -= camera_speed * elapsed_seconds; //move down
+         cam_moved = true;
+      }
+      if (glfwGetKey(window, GLFW_KEY_W)) {
+         cameraPosition.Z() -= camera_speed * elapsed_seconds; //move forward
+         cam_moved = true;
+      }
+      if (glfwGetKey(window, GLFW_KEY_S)) {
+         cameraPosition.Z() += camera_speed * elapsed_seconds; //move forward
+         cam_moved = true;
+      }
+      if (glfwGetKey(window, GLFW_KEY_LEFT)) {
+         camera_yaw += camera_yaw_speed * elapsed_seconds; //move forward
+         cam_moved = true;
+      }
+      if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
+         camera_yaw -= camera_yaw_speed * elapsed_seconds; //move forward
+         cam_moved = true;
+      }
+      if (cam_moved)
+      {
+         glUseProgram(gl_shader_program);
+         dp::Mat4 ViewLookYaw = dp::Mat4::LookYaw(cameraPosition, camera_yaw);
+         glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookYaw);
+      }
+
    }
 
    glDeleteProgram(gl_shader_program);
