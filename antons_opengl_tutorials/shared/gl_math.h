@@ -6,6 +6,7 @@ namespace dp
 #define VEC3_SIZE (3)
 #define ROW_SIZE (4)
 #define COL_SIZE (4)
+#define QUAT_SIZE (4)
 
    // Ñolumn-major vector with 3 items
    // | #0 |
@@ -187,7 +188,7 @@ namespace dp
       void Clear()
       {
          for (int i = 0; i < Count(); i++)
-            m_data[i] = 0;
+            m_data[i] = 0.0;
       }
    }; //Vec4
 
@@ -461,7 +462,69 @@ namespace dp
       // | 0  0  Sz Pz |
       // | 0  0  -1 0  |
       static Mat4 Projection(float screenWidth, float screenHeight);
-
    }; //Mat4
 
+   class Quaternion
+   {
+   public:
+      float m_data[COL_SIZE];
+      Quaternion()
+      {
+         Clear();
+      }
+      Quaternion(float angle, float x, float y, float z);
+      inline float & Q0() { return m_data[0]; }
+      inline float & Q1() { return m_data[1]; }
+      inline float & Q2() { return m_data[2]; }
+      inline float & Q3() { return m_data[3]; }
+      inline const float & Q0() const { return m_data[0]; }
+      inline const float & Q1() const { return m_data[1]; }
+      inline const float & Q2() const { return m_data[2]; }
+      inline const float & Q3() const { return m_data[3]; }
+
+      inline float & W() { return Q0(); }
+      inline float & X() { return Q1(); }
+      inline float & Y() { return Q2(); }
+      inline float & Z() { return Q3(); }
+      inline const float & W() const { return Q0(); }
+      inline const float & X() const { return Q1(); }
+      inline const float & Y() const { return Q2(); }
+      inline const float & Z() const { return Q3(); }
+
+      Quaternion(const Quaternion & other)
+      {
+         for (int i = 0; i < Count(); i++)
+            m_data[i] = other.m_data[i];
+      }
+      Quaternion & operator = (const Vec4 & other)
+      {
+         for (int i = 0; i < Count(); i++)
+            m_data[i] = other.m_data[i];
+
+         return *this;
+      }
+      inline int Count() { return COL_SIZE; }
+      const float & Element(int row) const
+      {
+         // row = 0..3
+         assert(row >= 0 && row < COL_SIZE);
+         return m_data[row];
+      }
+      float & Element(int row)
+      {
+         assert(row >= 0 && row < COL_SIZE);
+         return m_data[row];
+      }
+      void Clear()
+      {
+         for (int i = 0; i < Count(); i++)
+            m_data[i] = 0.0;
+      }
+
+      float Magnitude() const;
+      void Normalize();
+      Mat4 GetMatrix() const;
+
+      Quaternion operator *(const Quaternion & other) const;
+   };
 } //dp

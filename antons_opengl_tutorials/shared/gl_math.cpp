@@ -137,3 +137,71 @@ dp::Mat4 dp::Mat4::Projection(float screenWidth, float screenHeight)
    return Proj;
 }
 
+//////////////////////////////////////////////////////////////////////////
+
+dp::Quaternion::Quaternion(float angle, float x, float y, float z)
+{
+   m_data[0] = cos(angle/2.0);
+   m_data[1] = sin(angle/2.0) * x;
+   m_data[2] = sin(angle/2.0) * y;
+   m_data[3] = sin(angle/2.0) * z;
+}
+
+float dp::Quaternion::Magnitude() const
+{
+   float m = sqrt(W()*W() + X()*X() + Y()*Y() + Z()*Z());
+   return m;
+}
+
+void dp::Quaternion::Normalize()
+{
+   float m = Magnitude();
+   W() = W() / m;
+   X() = X() / m;
+   Y() = Y() / m;
+   Z() = Z() / m;
+}
+
+dp::Mat4 dp::Quaternion::GetMatrix() const
+{
+   Mat4 M = Mat4::Identity();
+
+   float w = W();
+   float x = X();
+   float y = Y();
+   float z = Z();
+
+   M.Element(0, 0) = 1.0 - 2.0*y*y - 2.0*z*z;
+   M.Element(0, 1) = 2.0*x*y - 2.0*w*z;
+   M.Element(0, 2) = 2.0*x*z + 2.0*w*y;
+
+   M.Element(1, 0) = 2.0*x*y + 2.0*w*z;
+   M.Element(1, 1) = 1.0 - 2.0*x*x - 2.0*z*z;
+   M.Element(1, 2) = 2.0*y*z - 2.0*w*x;
+   
+   M.Element(2, 0) = 2.0*x*z - 2.0*w*y;
+   M.Element(2, 1) = 2.0*y*z + 2.0*w*x;
+   M.Element(2, 2) = 1 - 2.0*x*x - 2.0*y*y;
+
+   return M;
+}
+
+dp::Quaternion dp::Quaternion::operator*(const Quaternion & r) const
+{
+   float q0 = Q0();
+   float q1 = Q1();
+   float q2 = Q2();
+   float q3 = Q3();
+   
+   float r0 = r.Q0();
+   float r1 = r.Q1();
+   float r2 = r.Q2();
+   float r3 = r.Q3();
+
+   Quaternion t;
+   t.Q0() = r0*q0 - r1*q1 - r2*q2 - r3*q3;
+   t.Q1() = r0*q1 + r1*q0 - r2*q3 + r3*q2;
+   t.Q2() = r0*q2 + r1*q3 + r2*q0 - r3*q1;
+   t.Q3() = r0*q3 - r1*q2 + r2*q1 + r3*q0;
+   return t;
+}
