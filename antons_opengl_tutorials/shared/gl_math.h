@@ -98,7 +98,8 @@ namespace dp
          return res;
       }
 
-      //////////////////////////////////////////////////////////////////////////
+      // aka vector multiplication 
+      // https://en.wikipedia.org/wiki/Cross_product
       // | a1 |   | b1 |   | a2*b3 - a3*b2 |
       // | a2 | x | b2 | = | a3*b1 - a1*b3 |
       // | a3 |   | b3 |   | a1*b2 - a2*b1 |
@@ -110,6 +111,19 @@ namespace dp
                      a3*b1 - a1 * b3, 
                      a1*b2 - a2 * b1);
       }
+      
+      // aka scalar multiplication 
+      // https://en.wikipedia.org/wiki/Dot_product
+      float DotProduct(const Vec3 & b) const
+      {
+         float a1 = X(), a2 = Y(), a3 = Z();
+         float b1 = b.X(), b2 = b.Y(), b3 = b.Z();
+         return (a1*b1 + a2*b2 + a3*b3);
+      }
+
+      // Interpolation
+      static Vec3 Lerp(const Vec3 & v0, const Vec3 & v1, float t);
+      Vec3 Lerp(const Vec3 & other, float t);
 
       float Magnitude() const;
       inline int Count() const { return VEC3_SIZE; }
@@ -173,7 +187,7 @@ namespace dp
 
          return *this;
       }
-      inline int Count() { return COL_SIZE; }
+      inline int Count() const { return COL_SIZE; }
       const float & Element(int row) const
       {
          // row = 0..3
@@ -248,7 +262,7 @@ namespace dp
             m_data[i] = 0;
       }
 
-      inline int Count() { return ROW_SIZE * COL_SIZE; }
+      inline int Count() const { return ROW_SIZE * COL_SIZE; }
       float & Element(int row, int col)
       {
          // row = 0..3, col=0..3
@@ -467,7 +481,7 @@ namespace dp
    class Quaternion
    {
    public:
-      float m_data[COL_SIZE];
+      float m_data[QUAT_SIZE];
       Quaternion()
       {
          Clear();
@@ -503,16 +517,17 @@ namespace dp
 
          return *this;
       }
-      inline int Count() { return COL_SIZE; }
+
+      inline int Count() const { return QUAT_SIZE; }
       const float & Element(int row) const
       {
          // row = 0..3
-         assert(row >= 0 && row < COL_SIZE);
+         assert(row >= 0 && row < QUAT_SIZE);
          return m_data[row];
       }
       float & Element(int row)
       {
-         assert(row >= 0 && row < COL_SIZE);
+         assert(row >= 0 && row < QUAT_SIZE);
          return m_data[row];
       }
       void Clear()
@@ -521,10 +536,69 @@ namespace dp
             m_data[i] = 0.0;
       }
 
+      //Add vectors
+      Quaternion operator+ (const Quaternion & other) const
+      {
+         Quaternion res;
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = Element(i) + other.Element(i);
+
+         return res;
+      }
+
+      //Subtract vectors
+      Quaternion operator- (const Quaternion & other) const
+      {
+         Quaternion res;
+
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = Element(i) - other.Element(i);
+
+         return res;
+      }
+
+      Quaternion operator-() const
+      {
+         Quaternion res;
+
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = -Element(i);
+
+         return res;
+      }
+
+      //Multiply by constant
+      Quaternion operator* (float c) const
+      {
+         Quaternion res;
+
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = Element(i) * c;
+
+         return res;
+      }
+
+      //Divide by constant
+      Quaternion operator/ (float c) const
+      {
+         Quaternion res;
+
+         for (int i = 0; i < Count(); i++)
+            res.Element(i) = Element(i) / c;
+
+         return res;
+      }
+
       float Magnitude() const;
       void Normalize();
       Mat4 GetMatrix() const;
 
       Quaternion operator *(const Quaternion & other) const;
+      
+      static float DotProduct(const Quaternion & q, const Quaternion & r);
+      float DotProduct(const Quaternion & other) const;
+      
+      static Quaternion Slerp(const Quaternion & q, const Quaternion & r, float t);
+      Quaternion Slerp(const Quaternion & other, float t) const;
    };
 } //dp

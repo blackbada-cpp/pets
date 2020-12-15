@@ -3,6 +3,17 @@
 #include "math.h"
 #include "gl_math.h"
 
+dp::Vec3 dp::Vec3::Lerp(const Vec3 & v0, const Vec3 & v1, float t)
+{
+   Vec3 lerp = v0 + (v1 - v0) * t;
+   return lerp;
+}
+
+dp::Vec3 dp::Vec3::Lerp(const Vec3 & other, float t)
+{
+   return Lerp(*this, other, t);
+}
+
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
@@ -184,6 +195,61 @@ dp::Mat4 dp::Quaternion::GetMatrix() const
    M.Element(2, 2) = 1 - 2.0*x*x - 2.0*y*y;
 
    return M;
+}
+
+float dp::Quaternion::DotProduct(const Quaternion & r) const
+{
+   float q0 = Q0();
+   float q1 = Q1();
+   float q2 = Q2();
+   float q3 = Q3();
+
+   float r0 = r.Q0();
+   float r1 = r.Q1();
+   float r2 = r.Q2();
+   float r3 = r.Q3();
+
+   return q0*r0 + q1*r1 + q2*r2 + q3*r3;
+}
+
+float dp::Quaternion::DotProduct(const Quaternion & q, const Quaternion & r)
+{
+   return q.DotProduct(r);
+}
+
+dp::Quaternion dp::Quaternion::Slerp(const Quaternion & q, const Quaternion & r, float t)
+{
+   float dp = q.DotProduct(r);
+   if (fabs(dp) >= 1.0f) {
+      return q;
+   }
+
+   if (dp < 0.0f)
+      return Slerp(-q, r, t);
+
+   float sin_omega = sqrt(1.0f - dp * dp);
+   Quaternion res;
+   if (fabs(sin_omega) < 0.001f) {
+      for (int i = 0; i < QUAT_SIZE; i++)
+      {
+         res.Element(i) = (1.0f - t) * q.Element(i) + t * r.Element(i);
+      }
+      return res;
+   }
+
+   float omega = acos(dp);
+   float a = sin((1.0f - t)*omega) / sin_omega;
+   float b = sin(t*omega) / sin_omega;
+   for (int i = 0; i < QUAT_SIZE; i++)
+   {
+      res.Element(i) = q.Element(i)*a + r.Element(i)*b;
+   }
+   return res;
+}
+
+dp::Quaternion dp::Quaternion::Slerp(const Quaternion & other, float t) const
+{
+   return Slerp(*this, other, t);
 }
 
 dp::Quaternion dp::Quaternion::operator*(const Quaternion & r) const
