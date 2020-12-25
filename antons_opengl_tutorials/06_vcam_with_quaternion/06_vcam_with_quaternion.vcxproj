@@ -161,6 +161,7 @@
     <ClInclude Include="..\shared\gl_math.h" />
     <ClInclude Include="..\shared\gl_shaders.h" />
     <ClInclude Include="..\shared\gl_util.h" />
+    <ClInclude Include="..\shared\obj_parser.h" />
     <ClInclude Include="..\vendor\glm\glm.hpp" />
     <ClInclude Include="..\vendor\glm\gtc\matrix_transform.hpp" />
     <ClInclude Include="src\pch.h" />
@@ -170,6 +171,12 @@
     <ClCompile Include="..\shared\gl_math.cpp" />
     <ClCompile Include="..\shared\gl_shaders.cpp" />
     <ClCompile Include="..\shared\gl_util.cpp" />
+    <ClCompile Include="..\shared\obj_parser.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\06_vcam_with_quaternion.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

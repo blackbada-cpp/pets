@@ -79,15 +79,14 @@ GLFWwindow* gl_init(UpdatePerspectiveCalback fptr)
    gllog::Get().Message("OpenGL version supported %s\n", version);
 
    // tell GL to only draw onto a pixel if the shape is closer to the viewer
-   glEnable(GL_DEPTH_TEST); // enable depth-testing
-   glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-
    glfwSetWindowSizeCallback(window, glfw_window_size_callback);
-   
-   glEnable(GL_CULL_FACE); // cull face
-   glCullFace(GL_BACK); // cull back face
-   glFrontFace(GL_CW); // GL_CCW for counter clock-wise
-
+   glEnable(GL_DEPTH_TEST);          // enable depth-testing
+   glDepthFunc(GL_LESS);             // depth-testing interprets a smaller value as "closer"
+   glEnable(GL_CULL_FACE);           // cull face
+   glCullFace(GL_BACK);              // cull back face
+   glFrontFace(GL_CCW);              // set counter-clock-wise vertex order to mean the front
+   //dp glFrontFace(GL_CW); // GL_CCW for counter clock-wise
+   glClearColor(0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
 
    gllog::Get().LogParams();
    return window;
