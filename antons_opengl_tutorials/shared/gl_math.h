@@ -7,6 +7,7 @@ namespace dp
 #define ROW_SIZE (4)
 #define COL_SIZE (4)
 #define QUAT_SIZE (4)
+   class Vec4;
 
    // Ñolumn-major vector with 3 items
    // | #0 |
@@ -26,6 +27,7 @@ namespace dp
          m_data[1] = y;
          m_data[2] = z;
       }
+      Vec3(const dp::Vec4 & v);
       inline float & X() { return m_data[0]; }
       inline float & Y() { return m_data[1]; }
       inline float & Z() { return m_data[2]; }
@@ -337,6 +339,12 @@ namespace dp
          static Mat4 res = GetIdentity();
          return res;
       }
+
+      float Determinant() const;
+
+      // return inverse Matrix M-1 https://de.wikipedia.org/wiki/Inverse_Matrix
+      // Note: MM-1 = E
+      Mat4 Inverse() const;
 
       //////////////////////////////////////////////////////////////////////////
       // Translation column-major matrix:

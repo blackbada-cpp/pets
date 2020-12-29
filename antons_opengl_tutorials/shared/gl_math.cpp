@@ -2,6 +2,14 @@
 #define _USE_MATH_DEFINES
 #include "math.h"
 #include "gl_math.h"
+#include "string.h"
+
+dp::Vec3::Vec3(const dp::Vec4 & v)
+{
+   X() = v.X();
+   Y() = v.Y();
+   Z() = v.Z();
+}
 
 dp::Vec3 dp::Vec3::Lerp(const Vec3 & v0, const Vec3 & v1, float t)
 {
@@ -148,6 +156,50 @@ dp::Mat4 dp::Mat4::Projection(float screenWidth, float screenHeight)
    return Proj;
 }
 
+float dp::Mat4::Determinant() const
+{
+   const Mat4 & mm = *this;
+   return mm.m_data[12] * mm.m_data[9] * mm.m_data[6] * mm.m_data[3] - mm.m_data[8] * mm.m_data[13] * mm.m_data[6] * mm.m_data[3] - mm.m_data[12] * mm.m_data[5] * mm.m_data[10] * mm.m_data[3] + mm.m_data[4] * mm.m_data[13] * mm.m_data[10] * mm.m_data[3] +
+      mm.m_data[8] * mm.m_data[5] * mm.m_data[14] * mm.m_data[3] - mm.m_data[4] * mm.m_data[9] * mm.m_data[14] * mm.m_data[3] - mm.m_data[12] * mm.m_data[9] * mm.m_data[2] * mm.m_data[7] + mm.m_data[8] * mm.m_data[13] * mm.m_data[2] * mm.m_data[7] +
+      mm.m_data[12] * mm.m_data[1] * mm.m_data[10] * mm.m_data[7] - mm.m_data[0] * mm.m_data[13] * mm.m_data[10] * mm.m_data[7] - mm.m_data[8] * mm.m_data[1] * mm.m_data[14] * mm.m_data[7] + mm.m_data[0] * mm.m_data[9] * mm.m_data[14] * mm.m_data[7] +
+      mm.m_data[12] * mm.m_data[5] * mm.m_data[2] * mm.m_data[11] - mm.m_data[4] * mm.m_data[13] * mm.m_data[2] * mm.m_data[11] - mm.m_data[12] * mm.m_data[1] * mm.m_data[6] * mm.m_data[11] + mm.m_data[0] * mm.m_data[13] * mm.m_data[6] * mm.m_data[11] +
+      mm.m_data[4] * mm.m_data[1] * mm.m_data[14] * mm.m_data[11] - mm.m_data[0] * mm.m_data[5] * mm.m_data[14] * mm.m_data[11] - mm.m_data[8] * mm.m_data[5] * mm.m_data[2] * mm.m_data[15] + mm.m_data[4] * mm.m_data[9] * mm.m_data[2] * mm.m_data[15] +
+      mm.m_data[8] * mm.m_data[1] * mm.m_data[6] * mm.m_data[15] - mm.m_data[0] * mm.m_data[9] * mm.m_data[6] * mm.m_data[15] - mm.m_data[4] * mm.m_data[1] * mm.m_data[10] * mm.m_data[15] + mm.m_data[0] * mm.m_data[5] * mm.m_data[10] * mm.m_data[15];
+}
+
+dp::Mat4 dp::Mat4::Inverse() const
+{
+   Mat4 T;
+   const Mat4 & mm = *this;
+   float det = mm.Determinant();
+   if (0.0f == det) {
+      //fprintf(stderr, "WARNING. matrix has no determinant. can not invert\n");
+      return mm;
+   }
+   float inv_det = 1.0f / det;
+
+   float data[ROW_SIZE * COL_SIZE] = {
+          inv_det * (mm.m_data[9] * mm.m_data[14] * mm.m_data[7] - mm.m_data[13] * mm.m_data[10] * mm.m_data[7] + mm.m_data[13] * mm.m_data[6] * mm.m_data[11] - mm.m_data[5] * mm.m_data[14] * mm.m_data[11] - mm.m_data[9] * mm.m_data[6] * mm.m_data[15] + mm.m_data[5] * mm.m_data[10] * mm.m_data[15]),
+          inv_det * (mm.m_data[13] * mm.m_data[10] * mm.m_data[3] - mm.m_data[9] * mm.m_data[14] * mm.m_data[3] - mm.m_data[13] * mm.m_data[2] * mm.m_data[11] + mm.m_data[1] * mm.m_data[14] * mm.m_data[11] + mm.m_data[9] * mm.m_data[2] * mm.m_data[15] - mm.m_data[1] * mm.m_data[10] * mm.m_data[15]),
+          inv_det * (mm.m_data[5] * mm.m_data[14] * mm.m_data[3] - mm.m_data[13] * mm.m_data[6] * mm.m_data[3] + mm.m_data[13] * mm.m_data[2] * mm.m_data[7] - mm.m_data[1] * mm.m_data[14] * mm.m_data[7] - mm.m_data[5] * mm.m_data[2] * mm.m_data[15] + mm.m_data[1] * mm.m_data[6] * mm.m_data[15]),
+          inv_det * (mm.m_data[9] * mm.m_data[6] * mm.m_data[3] - mm.m_data[5] * mm.m_data[10] * mm.m_data[3] - mm.m_data[9] * mm.m_data[2] * mm.m_data[7] + mm.m_data[1] * mm.m_data[10] * mm.m_data[7] + mm.m_data[5] * mm.m_data[2] * mm.m_data[11] - mm.m_data[1] * mm.m_data[6] * mm.m_data[11]),
+          inv_det * (mm.m_data[12] * mm.m_data[10] * mm.m_data[7] - mm.m_data[8] * mm.m_data[14] * mm.m_data[7] - mm.m_data[12] * mm.m_data[6] * mm.m_data[11] + mm.m_data[4] * mm.m_data[14] * mm.m_data[11] + mm.m_data[8] * mm.m_data[6] * mm.m_data[15] - mm.m_data[4] * mm.m_data[10] * mm.m_data[15]),
+          inv_det * (mm.m_data[8] * mm.m_data[14] * mm.m_data[3] - mm.m_data[12] * mm.m_data[10] * mm.m_data[3] + mm.m_data[12] * mm.m_data[2] * mm.m_data[11] - mm.m_data[0] * mm.m_data[14] * mm.m_data[11] - mm.m_data[8] * mm.m_data[2] * mm.m_data[15] + mm.m_data[0] * mm.m_data[10] * mm.m_data[15]),
+          inv_det * (mm.m_data[12] * mm.m_data[6] * mm.m_data[3] - mm.m_data[4] * mm.m_data[14] * mm.m_data[3] - mm.m_data[12] * mm.m_data[2] * mm.m_data[7] + mm.m_data[0] * mm.m_data[14] * mm.m_data[7] + mm.m_data[4] * mm.m_data[2] * mm.m_data[15] - mm.m_data[0] * mm.m_data[6] * mm.m_data[15]),
+          inv_det * (mm.m_data[4] * mm.m_data[10] * mm.m_data[3] - mm.m_data[8] * mm.m_data[6] * mm.m_data[3] + mm.m_data[8] * mm.m_data[2] * mm.m_data[7] - mm.m_data[0] * mm.m_data[10] * mm.m_data[7] - mm.m_data[4] * mm.m_data[2] * mm.m_data[11] + mm.m_data[0] * mm.m_data[6] * mm.m_data[11]),
+          inv_det * (mm.m_data[8] * mm.m_data[13] * mm.m_data[7] - mm.m_data[12] * mm.m_data[9] * mm.m_data[7] + mm.m_data[12] * mm.m_data[5] * mm.m_data[11] - mm.m_data[4] * mm.m_data[13] * mm.m_data[11] - mm.m_data[8] * mm.m_data[5] * mm.m_data[15] + mm.m_data[4] * mm.m_data[9] * mm.m_data[15]),
+          inv_det * (mm.m_data[12] * mm.m_data[9] * mm.m_data[3] - mm.m_data[8] * mm.m_data[13] * mm.m_data[3] - mm.m_data[12] * mm.m_data[1] * mm.m_data[11] + mm.m_data[0] * mm.m_data[13] * mm.m_data[11] + mm.m_data[8] * mm.m_data[1] * mm.m_data[15] - mm.m_data[0] * mm.m_data[9] * mm.m_data[15]),
+          inv_det * (mm.m_data[4] * mm.m_data[13] * mm.m_data[3] - mm.m_data[12] * mm.m_data[5] * mm.m_data[3] + mm.m_data[12] * mm.m_data[1] * mm.m_data[7] - mm.m_data[0] * mm.m_data[13] * mm.m_data[7] - mm.m_data[4] * mm.m_data[1] * mm.m_data[15] + mm.m_data[0] * mm.m_data[5] * mm.m_data[15]),
+          inv_det * (mm.m_data[8] * mm.m_data[5] * mm.m_data[3] - mm.m_data[4] * mm.m_data[9] * mm.m_data[3] - mm.m_data[8] * mm.m_data[1] * mm.m_data[7] + mm.m_data[0] * mm.m_data[9] * mm.m_data[7] + mm.m_data[4] * mm.m_data[1] * mm.m_data[11] - mm.m_data[0] * mm.m_data[5] * mm.m_data[11]),
+          inv_det * (mm.m_data[12] * mm.m_data[9] * mm.m_data[6] - mm.m_data[8] * mm.m_data[13] * mm.m_data[6] - mm.m_data[12] * mm.m_data[5] * mm.m_data[10] + mm.m_data[4] * mm.m_data[13] * mm.m_data[10] + mm.m_data[8] * mm.m_data[5] * mm.m_data[14] - mm.m_data[4] * mm.m_data[9] * mm.m_data[14]),
+          inv_det * (mm.m_data[8] * mm.m_data[13] * mm.m_data[2] - mm.m_data[12] * mm.m_data[9] * mm.m_data[2] + mm.m_data[12] * mm.m_data[1] * mm.m_data[10] - mm.m_data[0] * mm.m_data[13] * mm.m_data[10] - mm.m_data[8] * mm.m_data[1] * mm.m_data[14] + mm.m_data[0] * mm.m_data[9] * mm.m_data[14]),
+          inv_det * (mm.m_data[12] * mm.m_data[5] * mm.m_data[2] - mm.m_data[4] * mm.m_data[13] * mm.m_data[2] - mm.m_data[12] * mm.m_data[1] * mm.m_data[6] + mm.m_data[0] * mm.m_data[13] * mm.m_data[6] + mm.m_data[4] * mm.m_data[1] * mm.m_data[14] - mm.m_data[0] * mm.m_data[5] * mm.m_data[14]),
+          inv_det * (mm.m_data[4] * mm.m_data[9] * mm.m_data[2] - mm.m_data[8] * mm.m_data[5] * mm.m_data[2] + mm.m_data[8] * mm.m_data[1] * mm.m_data[6] - mm.m_data[0] * mm.m_data[9] * mm.m_data[6] - mm.m_data[4] * mm.m_data[1] * mm.m_data[10] + mm.m_data[0] * mm.m_data[5] * mm.m_data[10])
+   };
+   size_t sz = sizeof(data);
+   memcpy(T.m_data, data, sz);
+}
+
 //////////////////////////////////////////////////////////////////////////
 
 dp::Quaternion::Quaternion(float angle, float x, float y, float z)
@@ -173,6 +225,7 @@ void dp::Quaternion::Normalize()
    Z() = Z() / m;
 }
 
+/* convert a unit quaternion to a 4x4 matrix  */
 dp::Mat4 dp::Quaternion::GetMatrix() const
 {
    Mat4 M = Mat4::Identity();
@@ -252,6 +305,7 @@ dp::Quaternion dp::Quaternion::Slerp(const Quaternion & other, float t) const
    return Slerp(*this, other, t);
 }
 
+/* multiply quaternions to get another one. result=this*R */
 dp::Quaternion dp::Quaternion::operator*(const Quaternion & r) const
 {
    float q0 = Q0();
