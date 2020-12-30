@@ -57,10 +57,7 @@ int main()
    load_obj_file(MESH_FILE, vp, vt, vn, point_count);
 
    // Column-major matrices to produce Model matrix:
-   dp::Mat4 T, R, S;
-   T = dp::Mat4::Translation(0.5, 0.0, 0.0);
-   R = dp::Mat4::RotationZ(0.2);
-   S = dp::Mat4::Scale(0.5, 0.5, 0.5);
+   dp::Mat4 T, R;
 
    GLuint vao = 0;
    glGenVertexArrays(1, &vao);
@@ -90,8 +87,7 @@ int main()
 
    //////////////////////////////////////////////////////////////////////////
    // create camera
-   dp::Mat4 Model = dp::Mat4::Identity() * T * R * S;
-   float cam_speed = 1.0f; //1 unit per second
+   float cam_speed = 5.0f; //1 unit per second
    float cam_heading_speed = 100.0f; // 30 degrees per second
    float cam_heading = 0.0f;   // y-rotation in degrees
 
@@ -119,31 +115,33 @@ int main()
       model_mats[i] = dp::Mat4::Translation(sphere_pos_wor[i]); 
    }
 
+   glEnable(GL_DEPTH_TEST);          // enable depth-testing
+   glDepthFunc(GL_LESS);             // depth-testing interprets a smaller value as "closer"
+   glEnable(GL_CULL_FACE);           // cull face
+   glCullFace(GL_BACK);              // cull back face
+   glFrontFace(GL_CCW);              // set counter-clock-wise vertex order to mean the front
+   glClearColor(0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
+   glViewport(0, 0, g_gl_width, g_gl_height);
+
    while (!glfwWindowShouldClose(window))
    {
       // update timers
       static double previous_seconds = glfwGetTime();
-      double current_seconds = glfwGetTime();
-      double elapsed_seconds = current_seconds - previous_seconds;
-      previous_seconds = current_seconds;
+      double current_seconds         = glfwGetTime();
+      double elapsed_seconds         = current_seconds - previous_seconds;
+      previous_seconds               = current_seconds;
       _update_fps_counter(window);
       
       // wipe the drawing surface clear
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-      //dp //model animation
-      //dp Model = dp::Mat4::Identity() * T * R * S;
-
-      glUseProgram(shader_programme);
-      glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, Model);
-
       glViewport(0, 0, g_gl_width, g_gl_height);
 
-      //draw
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //both faces
       glUseProgram(shader_programme);
-      glBindVertexArray(vao);
-      glDrawArrays(GL_TRIANGLES, 0, point_count); //dp 2 triangles
+      for (int i = 0; i < NUM_SPHERES; i++) 
+      {
+         glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mats[i]);
+         glDrawArrays(GL_TRIANGLES, 0, point_count); //dp 2 triangles
+      }
 
       // update other events like input handling
       glfwPollEvents();
@@ -154,8 +152,6 @@ int main()
       float cam_yaw = 0.0f;
       float cam_pitch = 0.0f;
       float cam_roll = 0.0;
-
-      float camera_yaw_speed = 10.f; // 10 degrees per second
 
       //camera move
       if (glfwGetKey(window, GLFW_KEY_A)) {
@@ -194,7 +190,7 @@ int main()
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
       if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
-         cam_yaw -= camera_yaw_speed * elapsed_seconds; //move forward
+         cam_yaw -= cam_heading_speed * elapsed_seconds; //move forward
          cam_moved = true;
          dp::Quaternion q_yaw(cam_yaw, up.X(), up.Y(), up.Z()); //create versor
          quaternion = quaternion * q_yaw;

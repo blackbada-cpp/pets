@@ -198,16 +198,20 @@ dp::Mat4 dp::Mat4::Inverse() const
    };
    size_t sz = sizeof(data);
    memcpy(T.m_data, data, sz);
+   return T;
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-dp::Quaternion::Quaternion(float angle, float x, float y, float z)
+#define ONE_DEG_IN_RAD ( 2.0 * M_PI ) / 360.0 // 0.017444444
+
+dp::Quaternion::Quaternion(float degrees, float x, float y, float z)
 {
-   m_data[0] = cos(angle/2.0);
-   m_data[1] = sin(angle/2.0) * x;
-   m_data[2] = sin(angle/2.0) * y;
-   m_data[3] = sin(angle/2.0) * z;
+   float rad = ONE_DEG_IN_RAD * degrees;
+   m_data[0] = cos(rad/2.0);
+   m_data[1] = sin(rad/2.0) * x;
+   m_data[2] = sin(rad/2.0) * y;
+   m_data[3] = sin(rad/2.0) * z;
 }
 
 float dp::Quaternion::Magnitude() const
@@ -323,5 +327,7 @@ dp::Quaternion dp::Quaternion::operator*(const Quaternion & r) const
    t.Q1() = r0*q1 + r1*q0 - r2*q3 + r3*q2;
    t.Q2() = r0*q2 + r1*q3 + r2*q0 - r3*q1;
    t.Q3() = r0*q3 - r1*q2 + r2*q1 + r3*q0;
+
+   t.Normalize();
    return t;
 }
