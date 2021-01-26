@@ -597,7 +597,7 @@ namespace dp
          return res;
       }
 
-      float Magnitude() const;
+      //dp float Magnitude() const;
       void Normalize();
       Mat4 GetMatrix() const;
 

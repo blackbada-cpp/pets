@@ -208,28 +208,47 @@ dp::Mat4 dp::Mat4::Inverse() const
 dp::Quaternion::Quaternion(float degrees, float x, float y, float z)
 {
    float rad = ONE_DEG_IN_RAD * degrees;
-   m_data[0] = cos(rad/2.0);
-   m_data[1] = sin(rad/2.0) * x;
-   m_data[2] = sin(rad/2.0) * y;
-   m_data[3] = sin(rad/2.0) * z;
+   m_data[0] = cosf( rad / 2.0f );
+   m_data[1] = sinf( rad / 2.0f ) * x;
+   m_data[2] = sinf( rad / 2.0f ) * y;
+   m_data[3] = sinf( rad / 2.0f ) * z;
 }
 
-float dp::Quaternion::Magnitude() const
-{
-   float m = sqrt(W()*W() + X()*X() + Y()*Y() + Z()*Z());
-   return m;
-}
+//dp float dp::Quaternion::Magnitude() const
+//dp {
+//dp    float m = sqrt(W()*W() + X()*X() + Y()*Y() + Z()*Z());
+//dp    return m;
+//dp }
 
 void dp::Quaternion::Normalize()
 {
-   float m = Magnitude();
-   W() = W() / m;
-   X() = X() / m;
-   Y() = Y() / m;
-   Z() = Z() / m;
+   float sum = W()*W() + X()*X() + Y()*Y() + Z()*Z();
+   // NB: floats have min 6 digits of precision
+   const float thresh = 0.0001f;
+   if (fabs(1.0f - sum) < thresh) { return; }
+   //dp float mag = Magnitude();
+   float mag = sqrt(sum);
+   W() = W() / mag;
+   X() = X() / mag;
+   Y() = Y() / mag;
+   Z() = Z() / mag;
 }
 
-/* convert a unit quaternion to a 4x4 matrix  */
+// convert a unit quaternion to a 4x4 matrix  
+//
+// q = [w, x, y, z] where w*w + x*x + y*y + z*z = 1
+//
+// dp ERROR in Anton's book:
+//     |1 - 2yy - 2zz  2xy - 2wz      2xz + 2wy      0|
+//     |2xy + 2wz      1 - 2xx - 2zz  2yz - 2wx      0|
+// M = |2xz - 2wy      2yz + 2wx      1 - 2xx - 2yy  0|
+//     |0              0              0              1|
+//
+// dp Fixed error:
+//     |1 - 2yy - 2zz  2xy - 2wz      2xz - 2wy      0|
+//     |2xy + 2wz      1 - 2xx - 2zz  2yz + 2wx      0|
+// M = |2xz - 2wy      2yz + 2wx      1 - 2xx - 2yy  0|
+//     |0              0              0              1|
 dp::Mat4 dp::Quaternion::GetMatrix() const
 {
    Mat4 M = Mat4::Identity();
@@ -239,17 +258,44 @@ dp::Mat4 dp::Quaternion::GetMatrix() const
    float y = Y();
    float z = Z();
 
-   M.Element(0, 0) = 1.0 - 2.0*y*y - 2.0*z*z;
-   M.Element(0, 1) = 2.0*x*y - 2.0*w*z;
-   M.Element(0, 2) = 2.0*x*z + 2.0*w*y;
+#if 0
+   //dp error in m_data[8] and m_data[9]
+   M.Element(0, 0) = 1.0 - 2.0*y*y - 2.0*z*z;// m_data[0]
+   M.Element(0, 1) = 2.0*x*y - 2.0*w*z;      // m_data[4]
+   M.Element(0, 2) = 2.0*x*z + 2.0*w*y;      // m_data[8] ERROR
 
-   M.Element(1, 0) = 2.0*x*y + 2.0*w*z;
-   M.Element(1, 1) = 1.0 - 2.0*x*x - 2.0*z*z;
-   M.Element(1, 2) = 2.0*y*z - 2.0*w*x;
+   M.Element(1, 0) = 2.0*x*y + 2.0*w*z;      // m_data[0+1]
+   M.Element(1, 1) = 1.0 - 2.0*x*x - 2.0*z*z;// m_data[4+1]
+   M.Element(1, 2) = 2.0*y*z - 2.0*w*x;      // m_data[8+1] ERROR
    
-   M.Element(2, 0) = 2.0*x*z - 2.0*w*y;
-   M.Element(2, 1) = 2.0*y*z + 2.0*w*x;
-   M.Element(2, 2) = 1 - 2.0*x*x - 2.0*y*y;
+   M.Element(2, 0) = 2.0*x*z - 2.0*w*y;      // m_data[0+2]
+   M.Element(2, 1) = 2.0*y*z + 2.0*w*x;      // m_data[4+2]
+   M.Element(2, 2) = 1 - 2.0*x*x - 2.0*y*y;  // m_data[8+2]
+#endif // 0
+
+   //col 0
+   M.Element(0, 0) = 1.0f - 2.0f*y*y - 2.0f*z*z;// m_data[0]
+   M.Element(1, 0) = 2.0f*x*y + 2.0f*w*z;       // m_data[0+1]
+   M.Element(2, 0) = 2.0f*x*z - 2.0f*w*y;       // m_data[0+2]
+   M.Element(3, 0) = 0.0f;                      // m_data[0+3]
+
+   //col 1
+   M.Element(0, 1) = 2.0f*x*y - 2.0f*w*z;       // m_data[4]
+   M.Element(1, 1) = 1.0f - 2.0f*x*x - 2.0f*z*z;// m_data[4+1]
+   M.Element(2, 1) = 2.0f*y*z + 2.0f*w*x;       // m_data[4+2]
+   M.Element(3, 1) = 0.0f;                      // m_data[4+3]
+
+   //col 2
+   M.Element(0, 2) = 2.0f*x*z - 2.0f*w*y;        // m_data[8]  fixed ERROR
+   M.Element(1, 2) = 2.0f*y*z + 2.0f*w*x;        // m_data[8+1] fixed ERROR
+   M.Element(2, 2) = 1.0f - 2.0f*x*x - 2.0f*y*y; // m_data[8+2]
+   M.Element(3, 2) = 0.0f;                       // m_data[8+3]
+
+   //col 3
+   M.Element(0, 3) = 0.0f;
+   M.Element(1, 3) = 0.0f;
+   M.Element(2, 3) = 0.0f;
+   M.Element(3, 3) = 1.0f;
 
    return M;
 }

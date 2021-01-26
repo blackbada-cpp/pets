@@ -245,13 +245,13 @@ int main()
       if (cam_moved)
       {
          R = quaternion.GetMatrix();
-         cam_pos = cam_pos + dp::Vec3(fwd) * -move.Z();
+         cam_pos = cam_pos + dp::Vec3(fwd) * (-move.Z());
          cam_pos = cam_pos + dp::Vec3(up) * move.Y();
          cam_pos = cam_pos + dp::Vec3(rgt) * move.X();
          T = dp::Mat4::Translation(cam_pos);
 
          view_mat = R.Inverse() * T.Inverse();
-         glUseProgram(shader_programme);
+         //dp glUseProgram(shader_programme);
          glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view_mat);
       }
       if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
