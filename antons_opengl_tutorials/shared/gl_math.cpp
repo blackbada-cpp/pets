@@ -355,13 +355,13 @@ dp::Quaternion dp::Quaternion::Slerp(const Quaternion & other, float t) const
    return Slerp(*this, other, t);
 }
 
-/* multiply quaternions to get another one. result=this*R */
+/* multiply quaternions to get another one. result=R*this (don't ask why!)*/
 dp::Quaternion dp::Quaternion::operator*(const Quaternion & r) const
 {
-   float q0 = Q0();
-   float q1 = Q1();
-   float q2 = Q2();
-   float q3 = Q3();
+   float s0 = Q0();
+   float s1 = Q1();
+   float s2 = Q2();
+   float s3 = Q3();
    
    float r0 = r.Q0();
    float r1 = r.Q1();
@@ -369,10 +369,15 @@ dp::Quaternion dp::Quaternion::operator*(const Quaternion & r) const
    float r3 = r.Q3();
 
    Quaternion t;
-   t.Q0() = r0*q0 - r1*q1 - r2*q2 - r3*q3;
-   t.Q1() = r0*q1 + r1*q0 - r2*q3 + r3*q2;
-   t.Q2() = r0*q2 + r1*q3 + r2*q0 - r3*q1;
-   t.Q3() = r0*q3 - r1*q2 + r2*q1 + r3*q0;
+   float w = s0 * r0 - s1 * r1 - s2 * r2 - s3 * r3;
+   float x = s0 * r1 + s1 * r0 - s2 * r3 + s3 * r2;
+   float y = s0 * r2 + s1 * r3 + s2 * r0 - s3 * r1;
+   float z = s0 * r3 - s1 * r2 + s2 * r1 + s3 * r0;
+
+   t.Q0() = w;
+   t.Q1() = x;
+   t.Q2() = y;
+   t.Q3() = z;
 
    t.Normalize();
    return t;
