@@ -286,8 +286,8 @@ dp::Mat4 dp::Quaternion::GetMatrix() const
    M.Element(3, 1) = 0.0f;                      // m_data[4+3]
 
    //col 2
-   M.Element(0, 2) = 2.0f*x*z - 2.0f*w*y;        // m_data[8]  fixed ERROR
-   M.Element(1, 2) = 2.0f*y*z + 2.0f*w*x;        // m_data[8+1] fixed ERROR
+   M.Element(0, 2) = 2.0f*x*z + 2.0f*w*y;        // m_data[8]  fixed ERROR
+   M.Element(1, 2) = 2.0f*y*z - 2.0f*w*x;        // m_data[8+1] fixed ERROR
    M.Element(2, 2) = 1.0f - 2.0f*x*x - 2.0f*y*y; // m_data[8+2]
    M.Element(3, 2) = 0.0f;                       // m_data[8+3]
 
