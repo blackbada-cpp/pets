@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "05_virtual_camera", "05_vir
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "06_vcam_with_quaternion", "06_vcam_with_quaternion\06_vcam_with_quaternion.vcxproj", "{DF78C3C3-419A-492D-BD0C-2D38E39BD6F8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "07_ray_picking", "07_ray_picking\07_ray_picking.vcxproj", "{632EB254-9997-41A1-88AE-53FE275E98A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -81,6 +83,14 @@ Global
 		{DF78C3C3-419A-492D-BD0C-2D38E39BD6F8}.Release|x64.Build.0 = Release|x64
 		{DF78C3C3-419A-492D-BD0C-2D38E39BD6F8}.Release|x86.ActiveCfg = Release|Win32
 		{DF78C3C3-419A-492D-BD0C-2D38E39BD6F8}.Release|x86.Build.0 = Release|Win32
+		{632EB254-9997-41A1-88AE-53FE275E98A6}.Debug|x64.ActiveCfg = Debug|x64
+		{632EB254-9997-41A1-88AE-53FE275E98A6}.Debug|x64.Build.0 = Debug|x64
+		{632EB254-9997-41A1-88AE-53FE275E98A6}.Debug|x86.ActiveCfg = Debug|Win32
+		{632EB254-9997-41A1-88AE-53FE275E98A6}.Debug|x86.Build.0 = Debug|Win32
+		{632EB254-9997-41A1-88AE-53FE275E98A6}.Release|x64.ActiveCfg = Release|x64
+		{632EB254-9997-41A1-88AE-53FE275E98A6}.Release|x64.Build.0 = Release|x64
+		{632EB254-9997-41A1-88AE-53FE275E98A6}.Release|x86.ActiveCfg = Release|Win32
+		{632EB254-9997-41A1-88AE-53FE275E98A6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

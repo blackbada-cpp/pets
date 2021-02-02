@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{DF78C3C3-419A-492D-BD0C-2D38E39BD6F8}</ProjectGuid>
+    <ProjectGuid>{632EB254-9997-41A1-88AE-53FE275E98A6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>My05virtualcamera</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
