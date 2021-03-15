@@ -22,13 +22,22 @@ dp::Vec3 dp::Vec3::Lerp(const Vec3 & other, float t)
    return Lerp(*this, other, t);
 }
 
-//////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////
-
 float dp::Vec3::Magnitude() const
 {
    float m = sqrt(X()*X() + Y()*Y() + Z()*Z());
    return m;
+}
+
+dp::Vec3 dp::Vec3::Normalize() const
+{
+   dp::Vec3 res;
+   float l = Length();
+   if (0.0f == l) { return Vec3(0.0f, 0.0f, 0.0f); }
+   res.X() = X() / l;
+   res.Y() = Y() / l;
+   res.Z() = Z() / l;
+
+   return res;
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -114,7 +114,7 @@ int main()
    float camera_yaw = 0.0f;
    dp::Mat4 ViewLookYaw = dp::Mat4::LookYaw(cameraPosition, camera_yaw);
 
-   gl_Proj = dp::Mat4::Projection(g_gl_width, g_gl_height);
+   gl_Proj = dp::Mat4::Projection(g_gl_window_width, g_gl_window_height);
    glUniformMatrix4fv(gl_proj_location, 1, GL_FALSE, gl_Proj);
    //dp glUniformMatrix4fv(view_location, 1, GL_FALSE, View);
    //dp glUniformMatrix4fv(view_location, 1, GL_FALSE, ViewLookAt);
@@ -173,7 +173,7 @@ int main()
       _update_fps_counter(window);
       glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glViewport(0, 0, g_gl_width, g_gl_height);
+      glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
       //--- todo: draw
       //dp glPolygonMode(GL_FRONT, GL_LINE);

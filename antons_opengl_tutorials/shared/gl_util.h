@@ -9,8 +9,10 @@ typedef void(*UpdatePerspectiveCalback)(int, int);
 GLFWwindow* gl_init(UpdatePerspectiveCalback fptr = NULL);
 
 // keep track of window size for things like the viewport and the mouse cursor
-extern int g_gl_width;
-extern int g_gl_height;
+extern int g_gl_window_width;
+extern int g_gl_window_height;
+extern GLFWwindow* g_window;
 
 // a call-back function
-void glfw_window_size_callback(GLFWwindow* window, int width, int height);
+void WindowSizeCallback(GLFWwindow* window, int width, int height);
+void FramebufferSizeCallback(GLFWwindow* window, int width, int height);

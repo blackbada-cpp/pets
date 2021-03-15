@@ -128,6 +128,8 @@ namespace dp
       Vec3 Lerp(const Vec3 & other, float t);
 
       float Magnitude() const;
+      float Length() const { return Magnitude(); }
+      Vec3 Normalize() const;
       inline int Count() const { return VEC3_SIZE; }
       const float & Element(int row) const
       {

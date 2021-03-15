@@ -6,10 +6,13 @@
 #include "GLFW/glfw3.h"
 
 #define DEFAULT_WINDOW_WIDTH (800)
-#define DEFAULT_WINDOW_HEIGHT (600)
-int g_gl_width = DEFAULT_WINDOW_WIDTH;
-int g_gl_height = DEFAULT_WINDOW_HEIGHT;
-
+#define DEFAULT_WINDOW_HEIGHT (800)
+int g_gl_framebuffer_width = DEFAULT_WINDOW_WIDTH;
+int g_gl_framebuffer_height = DEFAULT_WINDOW_HEIGHT;
+int g_gl_window_width = DEFAULT_WINDOW_WIDTH;
+int g_gl_window_height = DEFAULT_WINDOW_HEIGHT;
+bool g_frambuffer_changed;
+GLFWwindow* g_window = NULL;
 
 void _update_fps_counter(GLFWwindow* window) 
 {
@@ -60,14 +63,13 @@ GLFWwindow* gl_init(UpdatePerspectiveCalback fptr)
    const GLFWvidmode* vmode = glfwGetVideoMode(mon);
    GLFWwindow* window = glfwCreateWindow(vmode->width, vmode->height, "Extended GL Init", mon, NULL);
 #else
-   GLFWwindow* window = glfwCreateWindow(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, "Extended GL Init", NULL, NULL);
+   GLFWwindow* window = glfwCreateWindow(g_gl_window_width, g_gl_window_height, "Extended GL Init", NULL, NULL);
 #endif
    if (!window) {
       gllog::Get().Error("ERROR: could not open window with GLFW3\n");
       glfwTerminate();
       return NULL;
    }
-   glfwMakeContextCurrent(window);
    // start GLEW extension handler
    glewExperimental = GL_TRUE;
    glewInit();
@@ -79,7 +81,16 @@ GLFWwindow* gl_init(UpdatePerspectiveCalback fptr)
    gllog::Get().Message("OpenGL version supported %s\n", version);
 
    // tell GL to only draw onto a pixel if the shape is closer to the viewer
-   glfwSetWindowSizeCallback(window, glfw_window_size_callback);
+   glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
+   glfwSetWindowSizeCallback(window, WindowSizeCallback);
+   glfwMakeContextCurrent(window);
+
+   glfwGetWindowSize(window, &g_gl_window_width, &g_gl_window_height);
+   gllog::Get().Message("initial window dims %ix%i\n", g_gl_window_width, g_gl_window_height);
+   glfwGetFramebufferSize(window, &g_gl_framebuffer_width, &g_gl_framebuffer_height);
+   gllog::Get().Message("initial framebuffer dims %ix%i\n", g_gl_framebuffer_width, g_gl_framebuffer_height);
+
+
    glEnable(GL_DEPTH_TEST);          // enable depth-testing
    glDepthFunc(GL_LESS);             // depth-testing interprets a smaller value as "closer"
    glEnable(GL_CULL_FACE);           // cull face
@@ -92,11 +103,20 @@ GLFWwindow* gl_init(UpdatePerspectiveCalback fptr)
    return window;
 }
 
-// keep track of window size for things like the viewport and the mouse cursor
-void glfw_window_size_callback(GLFWwindow* window, int width, int height)
+void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-   g_gl_width = width;
-   g_gl_height = height;
+   g_gl_framebuffer_width = width;
+   g_gl_framebuffer_height = height;
+   printf("framebuffer width %i height %i\n", width, height);
+   g_frambuffer_changed = true;
+}
+
+// keep track of window size for things like the viewport and the mouse cursor
+void WindowSizeCallback(GLFWwindow* window, int width, int height)
+{
+   g_gl_window_width = width;
+   g_gl_window_height = height;
+   printf("window width %i height %i\n", width, height);
 
    /* update any perspective matrices used here */
    if (gl_fptr)

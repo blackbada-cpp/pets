@@ -44,8 +44,8 @@ int main()
 {
    //////////////////////////////////////////////////////////////////////////
    // start OpenGL
-   GLFWwindow* window = gl_init(OnUpdatePerspective);
-   if (!window)
+   g_window = gl_init(OnUpdatePerspective);
+   if (!g_window)
       return 1;
    
    //////////////////////////////////////////////////////////////////////////
@@ -95,7 +95,7 @@ int main()
    
    dp::Quaternion quaternion(-cam_heading, 0.0f, 1.0f, 0.0f);
 
-   proj_mat = dp::Mat4::Projection(g_gl_width, g_gl_height);
+   proj_mat = dp::Mat4::Projection(g_gl_window_width, g_gl_window_height);
    R = quaternion.GetMatrix();
    view_mat = R * T;
    // keep track of some useful vectors that can be used for keyboard movement
@@ -121,20 +121,20 @@ int main()
    glCullFace(GL_BACK);              // cull back face
    glFrontFace(GL_CCW);              // set counter-clock-wise vertex order to mean the front
    glClearColor(0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
-   glViewport(0, 0, g_gl_width, g_gl_height);
+   glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
-   while (!glfwWindowShouldClose(window))
+   while (!glfwWindowShouldClose(g_window))
    {
       // update timers
       static double previous_seconds = glfwGetTime();
       double current_seconds         = glfwGetTime();
       double elapsed_seconds         = current_seconds - previous_seconds;
       previous_seconds               = current_seconds;
-      _update_fps_counter(window);
+      _update_fps_counter(g_window);
       
       // wipe the drawing surface clear
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glViewport(0, 0, g_gl_width, g_gl_height);
+      glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
       glUseProgram(shader_programme);
       for (int i = 0; i < NUM_SPHERES; i++) 
@@ -154,31 +154,31 @@ int main()
       float cam_roll = 0.0;
 
       //camera move
-      if (glfwGetKey(window, GLFW_KEY_A)) {
+      if (glfwGetKey(g_window, GLFW_KEY_A)) {
          move.X() -= cam_speed * elapsed_seconds; //move left
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_D)) {
+      if (glfwGetKey(g_window, GLFW_KEY_D)) {
          move.X() += cam_speed * elapsed_seconds; //move right
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_Q)) {
+      if (glfwGetKey(g_window, GLFW_KEY_Q)) {
          move.Y() += cam_speed * elapsed_seconds; //move forward
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_E)) {
+      if (glfwGetKey(g_window, GLFW_KEY_E)) {
          move.Y() -= cam_speed * elapsed_seconds; //move forward
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_W)) {
+      if (glfwGetKey(g_window, GLFW_KEY_W)) {
          move.Z() -= cam_speed * elapsed_seconds; //move forward
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_S)) {
+      if (glfwGetKey(g_window, GLFW_KEY_S)) {
          move.Z() += cam_speed * elapsed_seconds; //move forward
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_LEFT)) {
+      if (glfwGetKey(g_window, GLFW_KEY_LEFT)) {
          cam_yaw += cam_heading_speed * elapsed_seconds; //move forward
          cam_moved = true;
          dp::Quaternion q_yaw(cam_yaw, up.X(), up.Y(), up.Z()); //create versor
@@ -189,7 +189,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
+      if (glfwGetKey(g_window, GLFW_KEY_RIGHT)) {
          cam_yaw -= cam_heading_speed * elapsed_seconds; //move forward
          cam_moved = true;
          dp::Quaternion q_yaw(cam_yaw, up.X(), up.Y(), up.Z()); //create versor
@@ -200,7 +200,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_UP)) {
+      if (glfwGetKey(g_window, GLFW_KEY_UP)) {
          cam_pitch += cam_heading_speed * elapsed_seconds;
          cam_moved = true;
          dp::Quaternion q_pitch(cam_pitch, rgt.X(), rgt.Y(), rgt.Z());
@@ -211,7 +211,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_DOWN)) {
+      if (glfwGetKey(g_window, GLFW_KEY_DOWN)) {
          cam_pitch -= cam_heading_speed * elapsed_seconds;
          cam_moved = true;
          dp::Quaternion q_pitch(cam_pitch, rgt.X(), rgt.Y(), rgt.Z());
@@ -222,7 +222,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_Z)) {
+      if (glfwGetKey(g_window, GLFW_KEY_Z)) {
          cam_roll -= cam_heading_speed * elapsed_seconds;
          cam_moved = true;
          dp::Quaternion q_roll(cam_roll, fwd.X(), fwd.Y(), fwd.Z());
@@ -232,7 +232,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_C)) {
+      if (glfwGetKey(g_window, GLFW_KEY_C)) {
          cam_roll += cam_heading_speed * elapsed_seconds;
          cam_moved = true;
          dp::Quaternion q_roll(cam_roll, fwd.X(), fwd.Y(), fwd.Z());
@@ -254,11 +254,11 @@ int main()
          //dp glUseProgram(shader_programme);
          glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view_mat);
       }
-      if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-         glfwSetWindowShouldClose(window, 1); //exit
+      if (GLFW_PRESS == glfwGetKey(g_window, GLFW_KEY_ESCAPE)) {
+         glfwSetWindowShouldClose(g_window, 1); //exit
       }
 
-      glfwSwapBuffers(window);
+      glfwSwapBuffers(g_window);
    } //while loop
 
    glDeleteProgram(shader_programme);

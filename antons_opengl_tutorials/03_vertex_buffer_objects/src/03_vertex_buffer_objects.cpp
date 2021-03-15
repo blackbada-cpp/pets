@@ -62,7 +62,7 @@ int main()
       _update_fps_counter(window);
       glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glViewport(0, 0, g_gl_width, g_gl_height);
+      glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
       //--- todo: draw
       //glPolygonMode(GL_FRONT, GL_LINE);

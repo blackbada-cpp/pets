@@ -30,6 +30,72 @@ dp::Mat4 proj_mat = dp::Mat4::Identity();
 dp::Vec3 cam_pos(0.0f, 0.0f, 5.0f);
 // a world position for each sphere in the scene
 dp::Vec3 sphere_pos_wor[] = { dp::Vec3(-2.0, 0.0, 0.0), dp::Vec3(2.0, 0.0, 0.0), dp::Vec3(-2.0, 0.0, -2.0), dp::Vec3(1.5, 1.0, -1.0) };
+const float sphere_radius = 1.0f;
+// indicates which sphere is selected
+int g_selected_sphere = -1;
+
+
+/* check if a ray and a sphere intersect. if not hit, returns false. it rejects
+intersections behind the ray caster's origin, and sets intersection_distance to
+the closest intersection */
+bool ray_sphere(dp::Vec3 ray_origin_wor, dp::Vec3 ray_direction_wor, dp::Vec3 sphere_centre_wor, float sphere_radius, float* intersection_distance) {
+   // work out components of quadratic
+   dp::Vec3 dist_to_sphere = ray_origin_wor - sphere_centre_wor;
+   //dp float b = dot(ray_direction_wor, dist_to_sphere);
+   //dp float c = dot(dist_to_sphere, dist_to_sphere) - sphere_radius * sphere_radius;
+   float b = ray_direction_wor.DotProduct(dist_to_sphere);
+   float c = dist_to_sphere.DotProduct(dist_to_sphere) - sphere_radius * sphere_radius;
+   float b_squared_minus_c = b * b - c;
+   // check for "imaginary" answer. == ray completely misses sphere
+   if (b_squared_minus_c < 0.0f) { return false; }
+   // check for ray hitting twice (in and out of the sphere)
+   if (b_squared_minus_c > 0.0f) {
+      // get the 2 intersection distances along ray
+      float t_a = -b + sqrt(b_squared_minus_c);
+      float t_b = -b - sqrt(b_squared_minus_c);
+      *intersection_distance = t_b;
+      // if behind viewer, throw one or both away
+      if (t_a < 0.0) {
+         if (t_b < 0.0) { return false; }
+      }
+      else if (t_b < 0.0) {
+         *intersection_distance = t_a;
+      }
+
+      return true;
+   }
+   // check for ray hitting once (skimming the surface)
+   if (0.0f == b_squared_minus_c) {
+      // if behind viewer, throw away
+      float t = -b + sqrt(b_squared_minus_c);
+      if (t < 0.0f) { return false; }
+      *intersection_distance = t;
+      return true;
+   }
+   // note: could also check if ray origin is inside sphere radius
+   return false;
+}
+
+/* takes mouse position on screen and return ray in world coords */
+dp::Vec3 get_ray_from_mouse(float mouse_x, float mouse_y) {
+   // screen space (viewport coordinates)
+   float x = (2.0f * mouse_x) / g_gl_window_width - 1.0f;
+   float y = 1.0f - (2.0f * mouse_y) / g_gl_window_height;
+   float z = 1.0f;
+   // normalised device space
+   dp::Vec3 ray_nds = dp::Vec3(x, y, z);
+   // clip space
+   dp::Vec4 ray_clip = dp::Vec4(ray_nds.X(), ray_nds.Y(), -1.0, 1.0);
+   // eye space
+   dp::Vec4 ray_eye = proj_mat.Inverse() * ray_clip;
+   ray_eye = dp::Vec4(ray_eye.X(), ray_eye.Y(), -1.0, 0.0);
+   // world space
+   dp::Vec3 ray_wor = dp::Vec3(view_mat.Inverse() * ray_eye);
+   // don't forget to normalise the vector at some point
+   
+   ray_wor = ray_wor.Normalize();
+   return ray_wor;
+}
 
 void OnUpdatePerspective(int width, int height)
 {
@@ -39,15 +105,43 @@ void OnUpdatePerspective(int width, int height)
    glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, proj_mat);
 }
 
+/* this function is called when the mouse buttons are clicked or un-clicked */
+void OnMouseClick(GLFWwindow* window, int button, int action, int mods) {
+   // Note: could query if window has lost focus here
+   if (GLFW_PRESS == action) {
+      double xpos, ypos;
+      glfwGetCursorPos(g_window, &xpos, &ypos);
+      // work out ray
+      dp::Vec3 ray_wor = get_ray_from_mouse((float)xpos, (float)ypos);
+      // check ray against all spheres in scene
+      int closest_sphere_clicked = -1;
+      float closest_intersection = 0.0f;
+      for (int i = 0; i < NUM_SPHERES; i++) {
+         float t_dist = 0.0f;
+         if (ray_sphere(cam_pos, ray_wor, sphere_pos_wor[i], sphere_radius, &t_dist)) {
+            // if more than one sphere is in path of ray, only use the closest one
+            if (-1 == closest_sphere_clicked || t_dist < closest_intersection) {
+               closest_sphere_clicked = i;
+               closest_intersection = t_dist;
+            }
+         }
+      } // endfor
+      g_selected_sphere = closest_sphere_clicked;
+      printf("sphere %i was clicked\n", closest_sphere_clicked);
+   }
+}
+
 
 int main()
 {
    //////////////////////////////////////////////////////////////////////////
    // start OpenGL
-   GLFWwindow* window = gl_init(OnUpdatePerspective);
-   if (!window)
+   g_window = gl_init(OnUpdatePerspective);
+   if (!g_window)
       return 1;
-   
+
+   glfwSetMouseButtonCallback(g_window, OnMouseClick);
+
    //////////////////////////////////////////////////////////////////////////
    // create geometry
    GLfloat* vp = NULL; // array of vertex points
@@ -95,7 +189,7 @@ int main()
    
    dp::Quaternion quaternion(-cam_heading, 0.0f, 1.0f, 0.0f);
 
-   proj_mat = dp::Mat4::Projection(g_gl_width, g_gl_height);
+   proj_mat = dp::Mat4::Projection(g_gl_window_width, g_gl_window_height);
    R = quaternion.GetMatrix();
    view_mat = R * T;
    // keep track of some useful vectors that can be used for keyboard movement
@@ -121,20 +215,20 @@ int main()
    glCullFace(GL_BACK);              // cull back face
    glFrontFace(GL_CCW);              // set counter-clock-wise vertex order to mean the front
    glClearColor(0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
-   glViewport(0, 0, g_gl_width, g_gl_height);
+   glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
-   while (!glfwWindowShouldClose(window))
+   while (!glfwWindowShouldClose(g_window))
    {
       // update timers
       static double previous_seconds = glfwGetTime();
       double current_seconds         = glfwGetTime();
       double elapsed_seconds         = current_seconds - previous_seconds;
       previous_seconds               = current_seconds;
-      _update_fps_counter(window);
+      _update_fps_counter(g_window);
       
       // wipe the drawing surface clear
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glViewport(0, 0, g_gl_width, g_gl_height);
+      glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
       glUseProgram(shader_programme);
       for (int i = 0; i < NUM_SPHERES; i++) 
@@ -154,31 +248,31 @@ int main()
       float cam_roll = 0.0;
 
       //camera move
-      if (glfwGetKey(window, GLFW_KEY_A)) {
+      if (glfwGetKey(g_window, GLFW_KEY_A)) {
          move.X() -= cam_speed * elapsed_seconds; //move left
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_D)) {
+      if (glfwGetKey(g_window, GLFW_KEY_D)) {
          move.X() += cam_speed * elapsed_seconds; //move right
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_Q)) {
+      if (glfwGetKey(g_window, GLFW_KEY_Q)) {
          move.Y() += cam_speed * elapsed_seconds; //move forward
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_E)) {
+      if (glfwGetKey(g_window, GLFW_KEY_E)) {
          move.Y() -= cam_speed * elapsed_seconds; //move forward
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_W)) {
+      if (glfwGetKey(g_window, GLFW_KEY_W)) {
          move.Z() -= cam_speed * elapsed_seconds; //move forward
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_S)) {
+      if (glfwGetKey(g_window, GLFW_KEY_S)) {
          move.Z() += cam_speed * elapsed_seconds; //move forward
          cam_moved = true;
       }
-      if (glfwGetKey(window, GLFW_KEY_LEFT)) {
+      if (glfwGetKey(g_window, GLFW_KEY_LEFT)) {
          cam_yaw += cam_heading_speed * elapsed_seconds; //move forward
          cam_moved = true;
          dp::Quaternion q_yaw(cam_yaw, up.X(), up.Y(), up.Z()); //create versor
@@ -189,7 +283,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
+      if (glfwGetKey(g_window, GLFW_KEY_RIGHT)) {
          cam_yaw -= cam_heading_speed * elapsed_seconds; //move forward
          cam_moved = true;
          dp::Quaternion q_yaw(cam_yaw, up.X(), up.Y(), up.Z()); //create versor
@@ -200,7 +294,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_UP)) {
+      if (glfwGetKey(g_window, GLFW_KEY_UP)) {
          cam_pitch += cam_heading_speed * elapsed_seconds;
          cam_moved = true;
          dp::Quaternion q_pitch(cam_pitch, rgt.X(), rgt.Y(), rgt.Z());
@@ -211,7 +305,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_DOWN)) {
+      if (glfwGetKey(g_window, GLFW_KEY_DOWN)) {
          cam_pitch -= cam_heading_speed * elapsed_seconds;
          cam_moved = true;
          dp::Quaternion q_pitch(cam_pitch, rgt.X(), rgt.Y(), rgt.Z());
@@ -222,7 +316,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_Z)) {
+      if (glfwGetKey(g_window, GLFW_KEY_Z)) {
          cam_roll -= cam_heading_speed * elapsed_seconds;
          cam_moved = true;
          dp::Quaternion q_roll(cam_roll, fwd.X(), fwd.Y(), fwd.Z());
@@ -232,7 +326,7 @@ int main()
          rgt = R * dp::Vec4(1.0, 0.0, 0.0, 0.0);
          up = R * dp::Vec4(0.0, 1.0, 0.0, 0.0);
       }
-      if (glfwGetKey(window, GLFW_KEY_C)) {
+      if (glfwGetKey(g_window, GLFW_KEY_C)) {
          cam_roll += cam_heading_speed * elapsed_seconds;
          cam_moved = true;
          dp::Quaternion q_roll(cam_roll, fwd.X(), fwd.Y(), fwd.Z());
@@ -254,11 +348,11 @@ int main()
          //dp glUseProgram(shader_programme);
          glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view_mat);
       }
-      if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-         glfwSetWindowShouldClose(window, 1); //exit
+      if (GLFW_PRESS == glfwGetKey(g_window, GLFW_KEY_ESCAPE)) {
+         glfwSetWindowShouldClose(g_window, 1); //exit
       }
 
-      glfwSwapBuffers(window);
+      glfwSwapBuffers(g_window);
    } //while loop
 
    glDeleteProgram(shader_programme);
