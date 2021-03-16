@@ -215,6 +215,7 @@ int main()
    glCullFace(GL_BACK);              // cull back face
    glFrontFace(GL_CCW);              // set counter-clock-wise vertex order to mean the front
    glClearColor(0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
+   
    glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
    while (!glfwWindowShouldClose(g_window))

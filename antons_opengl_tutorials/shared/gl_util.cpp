@@ -70,15 +70,6 @@ GLFWwindow* gl_init(UpdatePerspectiveCalback fptr)
       glfwTerminate();
       return NULL;
    }
-   // start GLEW extension handler
-   glewExperimental = GL_TRUE;
-   glewInit();
-
-   // get version info
-   const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
-   const GLubyte* version = glGetString(GL_VERSION); // version as a string
-   gllog::Get().Message("Renderer: %s\n", renderer);
-   gllog::Get().Message("OpenGL version supported %s\n", version);
 
    // tell GL to only draw onto a pixel if the shape is closer to the viewer
    glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
@@ -90,14 +81,17 @@ GLFWwindow* gl_init(UpdatePerspectiveCalback fptr)
    glfwGetFramebufferSize(window, &g_gl_framebuffer_width, &g_gl_framebuffer_height);
    gllog::Get().Message("initial framebuffer dims %ix%i\n", g_gl_framebuffer_width, g_gl_framebuffer_height);
 
+   glfwWindowHint(GLFW_SAMPLES, 4);
 
-   glEnable(GL_DEPTH_TEST);          // enable depth-testing
-   glDepthFunc(GL_LESS);             // depth-testing interprets a smaller value as "closer"
-   glEnable(GL_CULL_FACE);           // cull face
-   glCullFace(GL_BACK);              // cull back face
-   glFrontFace(GL_CCW);              // set counter-clock-wise vertex order to mean the front
-   //dp glFrontFace(GL_CW); // GL_CCW for counter clock-wise
-   glClearColor(0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
+   // start GLEW extension handler
+   glewExperimental = GL_TRUE;
+   glewInit();
+
+   // get version info
+   const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
+   const GLubyte* version = glGetString(GL_VERSION); // version as a string
+   gllog::Get().Message("Renderer: %s\n", renderer);
+   gllog::Get().Message("OpenGL version supported %s\n", version);
 
    gllog::Get().LogParams();
    return window;
