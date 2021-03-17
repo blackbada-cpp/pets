@@ -8,5 +8,5 @@ call "%VSPATH%\vcvars64.bat"
 
 
 
-call "%VS140COMNTOOLS%\..\IDE\devenv" antons_opengl_tutorials.sln
+call "%VS140COMNTOOLS%\..\IDE\devenv" dp_opengl_tutorials.sln
 

@@ -178,6 +178,7 @@ int main()
    model_mat_location = glGetUniformLocation(shader_programme, "model");
    view_mat_location  = glGetUniformLocation(shader_programme, "view");
    proj_mat_location  = glGetUniformLocation(shader_programme, "proj");
+   int blue_location = glGetUniformLocation(shader_programme, "blue");
 
    //////////////////////////////////////////////////////////////////////////
    // create camera
@@ -228,12 +229,18 @@ int main()
       _update_fps_counter(g_window);
       
       // wipe the drawing surface clear
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glViewport(0, 0, g_gl_window_width, g_gl_window_height);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       glUseProgram(shader_programme);
       for (int i = 0; i < NUM_SPHERES; i++) 
       {
+         if (g_selected_sphere == i) {
+            glUniform1f(blue_location, 1.0f);
+         }
+         else {
+            glUniform1f(blue_location, 0.0f);
+         }
          glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mats[i]);
          glDrawArrays(GL_TRIANGLES, 0, point_count); //dp 2 triangles
       }
