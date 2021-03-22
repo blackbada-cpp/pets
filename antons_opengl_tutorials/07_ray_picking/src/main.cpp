@@ -19,21 +19,24 @@
 #define FRAGMENT_SHADER_FILE "shaders/test_fs.glsl"
 #define NUM_SPHERES 4
 
+//Engine
 //TODO: move all globals to engine 
 static GLuint shader_programme;
 static int model_mat_location = -1;
 static int view_mat_location  = -1;
 static int proj_mat_location  = -1;
 
+//Camera
 dp::Mat4 view_mat;
 dp::Mat4 proj_mat = dp::Mat4::Identity();
 dp::Vec3 cam_pos(0.0f, 0.0f, 5.0f);
+
+//3D Objects
 // a world position for each sphere in the scene
 dp::Vec3 sphere_pos_wor[] = { dp::Vec3(-2.0, 0.0, 0.0), dp::Vec3(2.0, 0.0, 0.0), dp::Vec3(-2.0, 0.0, -2.0), dp::Vec3(1.5, 1.0, -1.0) };
 const float sphere_radius = 1.0f;
 // indicates which sphere is selected
 int g_selected_sphere = -1;
-
 
 /* check if a ray and a sphere intersect. if not hit, returns false. it rejects
 intersections behind the ray caster's origin, and sets intersection_distance to
@@ -193,17 +196,18 @@ int main()
    proj_mat = dp::Mat4::Projection(g_gl_window_width, g_gl_window_height);
    R = quaternion.GetMatrix();
    view_mat = R * T;
+   
    // keep track of some useful vectors that can be used for keyboard movement
    dp::Vec4 fwd(0.0f, 0.0f, -1.0f, 0.0f);
    dp::Vec4 rgt(1.0f, 0.0f, 0.0f, 0.0f);
    dp::Vec4 up(0.0f, 1.0f, 0.0f, 0.0f);
-
 
    //////////////////////////////////////////////////////////////////////////
    // set rendering defaults
    glUseProgram(shader_programme);
    glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, proj_mat);
    glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view_mat);
+   
    // unique model matrix for each sphere
    dp::Mat4 model_mats[NUM_SPHERES];
    for (int i = 0; i < NUM_SPHERES; i++) { 
@@ -219,6 +223,7 @@ int main()
    
    glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
+   //07_ray_picking
    while (!glfwWindowShouldClose(g_window))
    {
       // update timers
