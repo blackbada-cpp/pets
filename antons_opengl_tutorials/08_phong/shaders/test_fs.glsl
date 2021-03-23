@@ -1,6 +1,8 @@
 #version 400
 in vec3 position_eye, normal_eye;
 
+uniform mat4 proj, view, model;
+
 //fixed point light properties
 vec3 light_position_world = vec3(0.0, 0.0, 2.0);
 vec3 Ls = vec3(1.0, 1.0, 1.0); //white specular colour
@@ -17,10 +19,16 @@ out vec4 fragment_colour;
 
 void main() {
   //ambient intencity
-  vec3 Ia = La*Ka;
+  vec3 Ia = La * Ka;
 
   //diffuse intencity
-  vec3 Id = vec3(0.0, 0.0, 0.0); //replace me later
+  //raise light intencity to eye space
+  vec3 light_position_eye = vec3(view * model * vec4(light_position_world, 1.0));
+  vec3 distance_to_light_eye = light_position_eye - position_eye;
+  vec3 direction_to_light_eye = normalize(distance_to_light_eye);
+  float dot_prod = dot(direction_to_light_eye, normal_eye);
+  dot_prod = max(dot_prod, 0.0);
+  vec3 Id = Ld * Kd * dot_prod; //final diffuse intensity
 
   //specular intencity
   vec3 Is = vec3(0.0, 0.0, 0.0); //replace me later
