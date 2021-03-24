@@ -23,7 +23,7 @@ static int proj_mat_location = -1;
 //Camera
 dp::Mat4 view_mat;
 dp::Mat4 proj_mat = dp::Mat4::Identity();
-dp::Vec3 cam_pos(0.0f, 0.0f, 5.0f);
+dp::Vec3 cam_pos(0.0f, 0.0f, 2.0f);
 
 //3D object
 dp::Mat4 model_mat;
