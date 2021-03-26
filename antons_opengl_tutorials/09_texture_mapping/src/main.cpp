@@ -1,5 +1,5 @@
-// 04_mats_and_vecs.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+//09_texture_rendering
+
 
 #include "pch.h"
 #include <iostream>
@@ -11,6 +11,8 @@
 #include "gl_shaders.h"
 #include "gl_util.h"
 #include "gl_math.h"
+
+#include "stb_image.h"
 
 #define ONE_DEG_IN_RAD ( 2.0 * M_PI ) / 360.0 // 0.017444444
 
@@ -36,7 +38,38 @@ void OnUpdatePerspective(int width, int height)
    glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, proj_mat);
 }
 
-//08_phong
+bool load_texture(const char* file_name, GLuint* tex) {
+   int x, y, n;
+   int force_channels = 4;
+   // the following function call flips the image
+   // needs to be called before each stbi_load(...);
+   stbi_set_flip_vertically_on_load(true);
+   unsigned char* image_data = stbi_load(file_name, &x, &y, &n, force_channels);
+   if (!image_data) {
+      fprintf(stderr, "ERROR: could not load %s\n", file_name);
+      return false;
+   }
+   // NPOT check
+   if ((x & (x - 1)) != 0 || (y & (y - 1)) != 0) { fprintf(stderr, "WARNING: texture %s is not power-of-2 dimensions\n", file_name); }
+
+   glGenTextures(1, tex);
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D, *tex);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+   glGenerateMipmap(GL_TEXTURE_2D);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+   GLfloat max_aniso = 0.0f;
+   glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_aniso);
+   // set the maximum!
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_aniso);
+   return true;
+}
+
+
+//09_texture_rendering
 int main()
 {
    g_window = gl_init(OnUpdatePerspective);
@@ -47,38 +80,37 @@ int main()
    glEnable(GL_DEPTH_TEST); // enable depth-testing
    glDepthFunc(GL_LESS);    // depth-testing interprets a smaller value as "closer"
 
-   float points[] = {
-      0.0f,  0.5f,  0.0f,
-      0.5f, -0.5f,  0.0f,
-      -0.5f, -0.5f,  0.0f
-   };
+   //2 triangles = rectangle
+   float points[] = { -0.5f, -0.5f, 0.0f, 
+      0.5f, -0.5f, 0.0f, 
+      0.5f, 0.5f, 0.0f, 
+      0.5f, 0.5f, 0.0f, 
+      -0.5f, 0.5f, 0.0f, 
+      -0.5f, -0.5f, 0.0f };
    
-   float normals[] = {
-      0.0f, 0.0f,  1.0f,
-      0.0f, 0.0f,  1.0f,
-      0.0f, 0.0f,  1.0f
-   };
-   
+   // 2^16 = 65536
+   GLfloat texcoords[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+
    // Column-major matrices to produce Model matrix:
    dp::Mat4 T, R, S;
 
    GLuint points_vbo = 0;
    glGenBuffers(1, &points_vbo);
    glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-   glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), points, GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, 2*9 * sizeof(float), points, GL_STATIC_DRAW);
 
-   GLuint normals_vbo = 0;
-   glGenBuffers(1, &normals_vbo);
-   glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
-   glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(float), normals, GL_STATIC_DRAW);
+   GLuint texcoords_vbo;
+   glGenBuffers(1, &texcoords_vbo);
+   glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
+   glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), texcoords, GL_STATIC_DRAW);
 
    GLuint vao = 0;
    glGenVertexArrays(1, &vao);
    glBindVertexArray(vao);
    glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-   glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
-   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+   glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
+   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
    glEnableVertexAttribArray(0);
    glEnableVertexAttribArray(1);
@@ -109,7 +141,7 @@ int main()
    glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, proj_mat);
    glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view_mat);
 
-   //Triangle model matrix
+   //Rectangle model matrix
    T = dp::Mat4::Translation(0.5, 0.0, 0.0);
    R = dp::Mat4::RotationZ(0.2);
    S = dp::Mat4::Scale(1.1, 1.1, 1.1);
@@ -120,13 +152,16 @@ int main()
    float last_position = 0.0f;
    float last_angle = 0.0f;
 
+   // load texture
+   GLuint tex;
+   (load_texture("skulluvmap.png", &tex));
+
    glEnable(GL_CULL_FACE); // cull face
    glCullFace(GL_BACK);    // cull back face
    glFrontFace(GL_CW);     // GL_CCW for counter clock-wise
 
    glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
-   //08_phong
    while (!glfwWindowShouldClose(g_window))
    {
       // update timers
