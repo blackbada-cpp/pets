@@ -18,7 +18,7 @@
 
 //Engine
 static GLuint shader_programme;
-static int model_mat_location = -1;
+//static int model_mat_location = -1;
 static int view_mat_location = -1;
 static int proj_mat_location = -1;
 
@@ -28,7 +28,7 @@ dp::Mat4 proj_mat = dp::Mat4::Identity();
 dp::Vec3 cam_pos(0.0f, 0.0f, 2.0f);
 
 //3D object
-dp::Mat4 model_mat;
+//dp::Mat4 model_mat;
 
 void OnUpdatePerspective(int width, int height)
 {
@@ -80,11 +80,23 @@ int main()
    glEnable(GL_DEPTH_TEST); // enable depth-testing
    glDepthFunc(GL_LESS);    // depth-testing interprets a smaller value as "closer"
 
-  /* OTHER STUFF GOES HERE NEXT */
-   GLfloat points[] = { -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.5f, 0.5f, 0.0f, 0.5f, 0.5f, 0.0f, -0.5f, 0.5f, 0.0f, -0.5f, -0.5f, 0.0f };
+   // layout (location = 0) in vec3 vertex_position;
+   GLfloat points[] = { 
+      -0.5f, -0.5f, 0.0f, 
+       0.5f, -0.5f, 0.0f, 
+       0.5f,  0.5f, 0.0f, 
+       0.5f,  0.5f, 0.0f, 
+      -0.5f,  0.5f, 0.0f, 
+      -0.5f, -0.5f, 0.0f };
 
-   // 2^16 = 65536
-   GLfloat texcoords[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+   // layout (location = 1) in vec2 vt;
+   GLfloat texcoords[] = { 
+      0.0f, 0.0f, 
+      1.0f, 0.0f, 
+      1.0f, 1.0f, 
+      1.0f, 1.0f, 
+      0.0f, 1.0f, 
+      0.0f, 0.0f };
 
 
    // Column-major matrices to produce Model matrix:
@@ -93,7 +105,7 @@ int main()
    GLuint points_vbo = 0;
    glGenBuffers(1, &points_vbo);
    glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
-   glBufferData(GL_ARRAY_BUFFER, 2*9 * sizeof(float), points, GL_STATIC_DRAW);
+   glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(GLfloat), points, GL_STATIC_DRAW);
 
    GLuint texcoords_vbo;
    glGenBuffers(1, &texcoords_vbo);
@@ -119,7 +131,7 @@ int main()
       return -1;
 
    glUseProgram(shader_programme);
-   model_mat_location = glGetUniformLocation(shader_programme, "model");
+   //model_mat_location = glGetUniformLocation(shader_programme, "model");
    view_mat_location = glGetUniformLocation(shader_programme, "view");
    proj_mat_location = glGetUniformLocation(shader_programme, "proj");
    
@@ -134,18 +146,20 @@ int main()
 
    //////////////////////////////////////////////////////////////////////////
    // set rendering defaults
+   glUseProgram(shader_programme);
    glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, proj_mat);
+   glUseProgram(shader_programme);
    glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view_mat);
 
    //Rectangle model matrix
-   T = dp::Mat4::Translation(0.5, 0.0, 0.0);
-   R = dp::Mat4::RotationZ(0.0);
-   S = dp::Mat4::Scale(1.0, 1.0, 1.0);
-   dp::Mat4::Identity() * T * R * S;
-   glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mat);
-   float speed = 0.5f; //1 unit per second
+   //T = dp::Mat4::Translation(0.5, 0.0, 0.0);
+   //R = dp::Mat4::RotationZ(0.0);
+   //S = dp::Mat4::Scale(1.0, 1.0, 1.0);
+   //model_mat = dp::Mat4::Identity() * T * R * S;
+   //glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mat);
+   //float speed = 0.5f; //1 unit per second
    //float rotation_speed = 0.0f; // -8.0f; //1 unit per second
-   float last_position = 0.0f;
+   //float last_position = 0.0f;
    //float last_angle = 0.0f;
 
    // load texture
@@ -182,16 +196,15 @@ int main()
       //}
 
       //update the matrix
-      T.SetTranslation(elapsed_seconds * speed + last_position, 0.0, 0.0);
+      //T.SetTranslation(elapsed_seconds * speed + last_position, 0.0, 0.0);
       //R.SetRotationZ(last_angle);
       //last_position = T.TranslationX();
       //last_angle = elapsed_seconds * rotation_speed + last_angle;
-      model_mat = dp::Mat4::Identity() * T * R * S;
+      //model_mat = dp::Mat4::Identity() * T * R * S;
       //Model = Model * T;
 
-      glUseProgram(shader_programme);
-      //dp glUniformMatrix4fv(matrix_location, 1, GL_FALSE, Model.m_data);
-      glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mat);
+      //glUseProgram(shader_programme);
+      //glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mat);
 
       glPolygonMode(GL_FRONT, GL_LINE);
       glUseProgram(shader_programme);

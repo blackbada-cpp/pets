@@ -51,4 +51,5 @@ void main() {
 
   //final colour
   fragment_colour = vec4(Is + Id + Ia, 1.0);
+  //fragment_colour = vec4(1.0, 1.0, 1.0, 1.0); //debug
 }
