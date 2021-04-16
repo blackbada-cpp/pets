@@ -14,11 +14,9 @@
 
 #include "stb_image.h"
 
-#define ONE_DEG_IN_RAD ( 2.0 * M_PI ) / 360.0 // 0.017444444
-
 //Engine
 static GLuint shader_programme;
-//static int model_mat_location = -1;
+static int model_mat_location = -1;
 static int view_mat_location = -1;
 static int proj_mat_location = -1;
 
@@ -28,7 +26,8 @@ dp::Mat4 proj_mat = dp::Mat4::Identity();
 dp::Vec3 cam_pos(0.0f, 0.0f, 2.0f);
 
 //3D object
-//dp::Mat4 model_mat;
+dp::Vec3 model_pos = dp::Vec3(0.0, 0.0, 0.0);
+dp::Mat4 model_mat;
 
 void OnUpdatePerspective(int width, int height)
 {
@@ -131,7 +130,7 @@ int main()
       return -1;
 
    glUseProgram(shader_programme);
-   //model_mat_location = glGetUniformLocation(shader_programme, "model");
+   model_mat_location = glGetUniformLocation(shader_programme, "model");
    view_mat_location = glGetUniformLocation(shader_programme, "view");
    proj_mat_location = glGetUniformLocation(shader_programme, "proj");
    
@@ -155,12 +154,9 @@ int main()
    //T = dp::Mat4::Translation(0.5, 0.0, 0.0);
    //R = dp::Mat4::RotationZ(0.0);
    //S = dp::Mat4::Scale(1.0, 1.0, 1.0);
-   //model_mat = dp::Mat4::Identity() * T * R * S;
-   //glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mat);
-   //float speed = 0.5f; //1 unit per second
-   //float rotation_speed = 0.0f; // -8.0f; //1 unit per second
-   //float last_position = 0.0f;
-   //float last_angle = 0.0f;
+   model_mat = dp::Mat4::Translation(model_pos); // dp::Mat4::Identity()*T* R* S;
+   glUseProgram(shader_programme);
+   glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mat);
 
    // load texture
    GLuint tex;
@@ -170,10 +166,13 @@ int main()
    //   glUseProgram(shader_programme);
    //   glUniform1i(tex_loc, 0);//use active texture 0
 
+   glEnable(GL_DEPTH_TEST);          // enable depth-testing
+   glDepthFunc(GL_LESS);             // depth-testing interprets a smaller value as "closer"
    glEnable(GL_CULL_FACE); // cull face
    glCullFace(GL_BACK);    // cull back face
-   glFrontFace(GL_CW);     // GL_CCW for counter clock-wise
-
+   //dp this will make all triangles invisible !!!!!!!! glFrontFace(GL_CW);     // GL_CCW for counter clock-wise
+   glFrontFace(GL_CCW);              // set counter-clock-wise vertex order to mean the front
+   glClearColor(0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
    glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
    while (!glfwWindowShouldClose(g_window))
@@ -186,29 +185,15 @@ int main()
       _update_fps_counter(g_window);
 
       // wipe the drawing surface clear
-      glViewport(0, 0, g_gl_window_width, g_gl_window_height);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glViewport(0, 0, g_gl_window_width, g_gl_window_height);
 
-      ////reverse direction when going to far left or right
-      //if (fabs(last_position) > 1.0f) {
-      //   speed = -speed;
-      //   rotation_speed = -rotation_speed;
-      //}
-
-      //update the matrix
-      //T.SetTranslation(elapsed_seconds * speed + last_position, 0.0, 0.0);
-      //R.SetRotationZ(last_angle);
-      //last_position = T.TranslationX();
-      //last_angle = elapsed_seconds * rotation_speed + last_angle;
-      //model_mat = dp::Mat4::Identity() * T * R * S;
-      //Model = Model * T;
-
-      //glUseProgram(shader_programme);
-      //glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mat);
-
-      glPolygonMode(GL_FRONT, GL_LINE);
       glUseProgram(shader_programme);
-      glBindVertexArray(vao);
+      glUniformMatrix4fv(model_mat_location, 1, GL_FALSE, model_mat);
+
+      //glPolygonMode(GL_FRONT, GL_LINE);
+      glUseProgram(shader_programme);
+      //glBindVertexArray(vao);
       glDrawArrays(GL_TRIANGLES, 0, 6);
       //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
